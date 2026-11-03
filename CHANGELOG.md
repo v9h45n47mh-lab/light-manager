@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Make program group headings larger and individual program names smaller on desktop and mobile.
+
 ## 1.0.0 – 03.11.2026
 
 - Prepare the repository for GitHub releases and installation as a custom HACS integration.
