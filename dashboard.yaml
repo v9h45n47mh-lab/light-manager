@@ -1,0 +1,4 @@
+type: custom:light-manager-card
+grid_options:
+  columns: 12
+  rows: auto
