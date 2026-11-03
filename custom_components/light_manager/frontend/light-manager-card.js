@@ -1,5 +1,5 @@
-/* Light Manager 0.3.1 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.0.1';
+/* Light Manager 1.0.4 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.0.4';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -16,7 +16,7 @@ const LM_STYLE = `
 .settings-sensor-value{margin-inline-start:8px}
 .tags>div{display:flex;flex-wrap:wrap;gap:2px 10px}
 .time-heading{justify-content:space-between}
-.program-group+.program-group{margin-top:16px}.program-group-head{display:flex;align-items:center;gap:8px;width:100%;text-align:left;color:inherit}.program-group-head strong{font-size:16px}.program-group-head small{margin-left:auto}
+.program-group+.program-group{margin-top:16px}.program-group-head{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px 9px 0;text-align:left;color:inherit}.program-group-head strong{font-size:16px}.program-group-head small{margin-left:auto}
 :host{display:block;color:var(--primary-text-color,#212121);font-family:var(--ha-font-family-body,Roboto,Arial,sans-serif);font-size:14px;--lm-accent:var(--primary-color,#03a9f4);--lm-muted:var(--secondary-text-color,#727272);--lm-line:var(--divider-color,#e0e0e0);--lm-bg:var(--ha-card-background,var(--card-background-color,#fff))}
 *{box-sizing:border-box}ha-card{display:block;background:var(--lm-bg);border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--lm-line));border-radius:var(--ha-card-border-radius,12px);box-shadow:var(--ha-card-box-shadow,none);overflow:hidden}
 h2,h3,h4,p{margin:0}h2,h3{font-size:16px;font-weight:500}small,.muted{font-size:12px;color:var(--lm-muted);line-height:1.5}
@@ -457,7 +457,7 @@ class LightManagerCard extends HTMLElement {
       <h3>Settings</h3>
       <p>Use <b>Select lights</b> and <b>Select sensors</b> to add Home Assistant entities. The pickers show names and entity IDs. Lights are grouped by their Home Assistant area. Use the arrows to reorder areas. Lights within an area are alphabetical. The sensor list shows current readings or states. For opening contacts with custom states, enter the exact open and closed values, separated by commas.</p>
       <h3>Programs</h3>
-      <p>Time and sensor programs are grouped under larger headings that you can expand or collapse. Each entry shows the weekdays and, for sensor programs, the validity window. Use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
+      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Each entry shows the weekdays and, for sensor programs, the validity window. Use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
       <p>Actions can have names and can be expanded or collapsed together in the editor. Set the weekdays and, if needed, enable the season restriction and enter dates as DD.MM. The browser remembers program, group and readings-panel expansion for each user.</p>
       <h3>Time program</h3>
       <p>Actions can use a fixed time, sunrise or sunset. Solar actions support an offset. The calculated switching time respects the earliest and latest times. The daily schedule hides past recurring times. Use <b>Skip</b> to omit an upcoming action for today. Use <b>+ Additional action</b> to schedule a one-time action for later today.</p>
@@ -473,7 +473,7 @@ class LightManagerCard extends HTMLElement {
       <h3>Einstellungen</h3>
       <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
       <h3>Programme</h3>
-      <p>Die größeren Überschriften für Zeitprogramme und Sensorprogramme lassen sich auf- und zuklappen.</p>
+      <p>Die größeren Überschriften für Zeitprogramme und Sensorprogramme sind linksbündig mit den Programmnamen und lassen sich auf- und zuklappen.</p>
       <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Jeder Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Mit den Pfeilen änderst du die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
       <p>Schaltaktionen können eigene Namen haben und im Editor gemeinsam auf- oder zugeklappt werden. Wähle die Wochentage und bei Bedarf <b>Saison einschränken</b>. Die Saisonfelder verwenden TT.MM. Der Browser merkt sich je Benutzer den Aufklappzustand der Programmgruppen, Programme und Messwerte.</p>
       <h3>Zeitprogramm</h3>

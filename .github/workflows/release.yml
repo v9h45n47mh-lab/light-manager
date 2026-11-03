@@ -1,0 +1,30 @@
+name: Release assets
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and attach the GitHub package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(python -c 'import json; print(json.load(open("custom_components/light_manager/manifest.json"))["version"])')
+          test "$RELEASE_TAG" = "v$version"
+          python scripts/build_release.py
+          asset="../Light-Manager-${version}-GitHub.zip"
+          mv "../Light-Manager-${version}.zip" "$asset"
+          gh release upload "$RELEASE_TAG" "$asset"
