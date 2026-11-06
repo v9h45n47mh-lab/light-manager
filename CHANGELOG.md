@@ -1,4 +1,10 @@
 # Changelog
+
+## 1.1.0
+
+- Match Shutter Manager navigation icons and placement.
+- Simplify light status and replace recent commands with a collapsible daily switching history in Settings.
+- Preserve all daily command results across restarts in the Home Assistant time zone.
 ## 1.0.4
 
 - Publish the updated integration and frontend with the matching release version.

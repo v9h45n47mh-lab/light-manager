@@ -6,6 +6,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import logging
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 try:
     import probatio as vol
@@ -27,7 +28,7 @@ from homeassistant.helpers.sun import get_astral_event_date
 from .engine import Engine, validate, restrict_scene_config, scene_matches
 
 DOMAIN = 'light_manager'
-VERSION = '1.0.4'
+VERSION = '1.1.0'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -93,6 +94,7 @@ class Manager:
         self.hass = hass; self.engine = Engine(tz=hass.config.time_zone)
         self.store = Store(hass, 1, DOMAIN)
         self.revision = 0; self.lock = asyncio.Lock(); self.unsubs = []
+        self.daily_history = []
         self.history = []; self.retry = {}; self.errors = {}
         self.state_unsub = None; self.state_callback = None; self.watched = set()
         self.queued = False; self.stopped = False; self._saved = None
@@ -113,6 +115,8 @@ class Manager:
             self.engine = Engine(cleaned, data.get('runtime'), self.hass.config.time_zone)
             self.revision = data.get('revision', 0)
             self.history = data.get('history', [])[-60:]
+            self.daily_history = data.get('daily_history', [])
+            self.prune_daily_history()
             if legacy or restricted or migrated:
                 self.revision += 1
                 if legacy:
@@ -204,15 +208,31 @@ class Manager:
     def solar(self, event, day):
         return get_astral_event_date(self.hass, event, day)
 
+    def prune_daily_history(self):
+        zone = ZoneInfo(self.hass.config.time_zone)
+        today = utcnow().astimezone(zone).date()
+        self.daily_history = [
+            row for row in self.daily_history
+            if datetime.fromisoformat(row['time']).astimezone(zone).date() == today
+        ]
+
     async def persist(self):
+        self.prune_daily_history()
         data = {'config': self.engine.config, 'runtime': self.engine.rt,
-                'revision': self.revision, 'history': self.history[-60:]}
+                'revision': self.revision, 'history': self.history[-60:],
+                'daily_history': deepcopy(self.daily_history)}
         if data != self._saved:
             await self.store.async_save(data); self._saved = deepcopy(data)
 
-    def log(self, message, error=False):
+    def log(self, message, error=False, command=None):
         self.history.append({'time': utcnow().isoformat(), 'message': message, 'error': error})
         self.history = self.history[-60:]
+        if command is not None:
+            self.prune_daily_history()
+            self.daily_history.append({
+                'time': self.history[-1]['time'], 'message': message, 'error': error,
+                'entities': list(command['entities']), 'action': deepcopy(command['action'])
+            })
         if error: _LOGGER.warning('%s', message)
 
     def catalog(self):
@@ -268,6 +288,8 @@ class Manager:
                 'catalog': self.catalog(), 'areas': [{'id': 'area:' + ident, 'name': name} for ident, name in areas.items()],
                 'lamp_areas': {entity: 'area:' + area for entity, area in lamp_areas.items()},
                 'completed_once': [ident for ident, done in self.engine.rt['once_done'].items() if done['date'] == str(local.date()) and done.get('complete')], 'status': deepcopy(self.engine.status), 'rules': deepcopy(self.engine.rules),
+                'daily_history': [deepcopy(row) for row in self.daily_history
+                                  if datetime.fromisoformat(row['time']).astimezone(ZoneInfo(self.hass.config.time_zone)).date() == local.date()],
                 'warnings': self.engine.warnings + list(self.errors.values()), 'history': list(reversed(self.history)),
                 'planned': deepcopy(self.engine.planned), 'calculated': calculated, 'sun': sun, 'today': str(local.date()),
                 'timezone': self.hass.config.time_zone}
@@ -377,11 +399,11 @@ class Manager:
                 async with asyncio.timeout(15): await self.execute(c, states)
             except Exception as err:
                 message = f'{", ".join(c["entities"])}: {err}'
-                if self.errors.get(key) != message: self.log(message, error=True)
+                self.log(message, error=True, command=c)
                 self.errors[key] = message; self.retry[key] = now.timestamp() + 30
             else:
                 self.engine.success(c); self.retry.pop(key, None); self.errors.pop(key, None)
-                self.log(f'{", ".join(c["entities"])} → {c["action"]["mode"]}')
+                self.log(f'{", ".join(c["entities"])} → {c["action"]["mode"]}', command=c)
         await self.persist()
         async_dispatcher_send(self.hass, SIGNAL)
 

@@ -1,5 +1,5 @@
-/* Light Manager 1.0.4 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.0.4';
+/* Light Manager 1.1.0 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.1.0';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -59,6 +59,10 @@ button,input,select{font:inherit}button{color:var(--lm-accent);border:0;backgrou
   .choices:not(.days) label{min-height:44px}
   .target-choices summary{min-height:44px}
 }
+
+.tabs button.icon-tab{display:grid;place-items:center;flex:0 0 48px;width:48px;min-width:48px;padding:10px}.tabs .icon-tab .status-icon{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.daily-history-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--lm-line);font-size:12px}.daily-history-row:last-child{border-bottom:0}.daily-command{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.daily-command strong{font-size:13px;font-weight:500}.command-result{display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;color:var(--success-color,#388e3c)}.command-result .status-icon{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.failed .command-result,.failure-reason{color:var(--error-color,#db4437)}
+@media(max-width:380px){.daily-history-row{gap:6px;grid-template-columns:36px minmax(0,1fr) auto}.command-result{font-size:10px}}
 `;
 
 class LightManagerCard extends HTMLElement {
@@ -174,7 +178,15 @@ class LightManagerCard extends HTMLElement {
     if(kind==='lux')return this.language()==='en'?`Start ≤ ${a.lux_on} lx · End ${a.lux_end==='below'?'≤':'≥'} ${a.lux_off} lx / ${a.delay} s`:`Start ≤ ${a.lux_on} lx · Ende ${a.lux_end==='below'?'≤':'≥'} ${a.lux_off} lx / ${a.delay} s`;
     return kind==='contact'?'Mindestens ein Kontakt offen':'Mindestens ein Sensor meldet Bewegung';}
   btn(op,label,extra='',cls=''){return `<button type="button" data-op="${op}" ${extra} class="${cls}" ${this.busy?'disabled':''}>${label}</button>`;}
-  icon(kind){if(kind==='sunrise'||kind==='sunset'){const paths={"sunrise": "<path d=\"M2 17h20M5 21h14M7 17a5 5 0 0 1 10 0M4 12l-2-2m18 2 2-2M12 9V2m-3 3 3-3 3 3\"/>", "sunset": "<path d=\"M2 17h20M5 21h14M7 17a5 5 0 0 1 10 0M4 12l-2-2m18 2 2-2M12 2v7m-3-3 3 3 3-3\"/>"};return `<svg class="status-icon" data-icon="${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;}const paths={
+  icon(kind){
+    const strokes={
+      schedule:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
+      sensors:'<circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4m11.4-11.4a8 8 0 0 1 0 11.4M3.5 3.5a12 12 0 0 0 0 17m17-17a12 12 0 0 1 0 17"/>',
+      success:'<circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/>',
+      failure:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/>'
+    };
+    if(strokes[kind])return `<svg class="status-icon" data-icon="${kind}" viewBox="0 0 24 24" aria-hidden="true">${strokes[kind]}</svg>`;
+    if(kind==='sunrise'||kind==='sunset'){const paths={"sunrise": "<path d=\"M2 17h20M5 21h14M7 17a5 5 0 0 1 10 0M4 12l-2-2m18 2 2-2M12 9V2m-3 3 3-3 3 3\"/>", "sunset": "<path d=\"M2 17h20M5 21h14M7 17a5 5 0 0 1 10 0M4 12l-2-2m18 2 2-2M12 2v7m-3-3 3 3 3-3\"/>"};return `<svg class="status-icon" data-icon="${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;}const paths={
     edit:'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
     copy:'M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z',
     delete:'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
@@ -194,7 +206,7 @@ class LightManagerCard extends HTMLElement {
     if(!this.shadowRoot.querySelector('ha-card'))this.shadowRoot.innerHTML='<style></style><ha-card></ha-card><div class="dialog-host"></div>';
     this.shadowRoot.querySelector('style').textContent=LM_STYLE;
     this.shadowRoot.querySelector('ha-card').innerHTML=`
-      <div class="card-top"><nav class="tabs" aria-label="Lichtsteuerung">${[['programs','Programme'],['time','Zeitprogramm'],['sensors','Sensorprogramme']].map(([k,v])=>this.btn('tab',v,`data-tab="${k}" aria-current="${this.tab===k?'page':'false'}"`,this.tab===k?'active':'')).join('')}</nav>
+      <div class="card-top"><nav class="tabs" aria-label="Lichtsteuerung">${[['programs','Programme'],['time','Zeitprogramm'],['sensors','Sensorprogramme']].map(([k,v])=>this.btn('tab',k==='programs'?v:this.icon(k==='time'?'schedule':'sensors'),`title="${this.t(v)}" aria-label="${this.t(v)}" data-tab="${k}" aria-current="${this.tab===k?'page':'false'}"`,[(k==='programs'?'':'icon-tab'),(this.tab===k?'active':'')].join(' '))).join('')}</nav>
       ${this.btn('guide',this.icon('help'),`title="Anleitung" aria-label="Anleitung" aria-current="${this.tab==='guide'?'page':'false'}"`,'settings-button '+(this.tab==='guide'?'active':''))}
       ${this.btn('settings',this.icon('settings'),`title="Einstellungen" aria-label="Einstellungen" aria-current="${this.tab==='settings'||this.tab==='status'?'page':'false'}"`,'settings-button '+(['settings','status'].includes(this.tab)?'active':''))}</div>
       ${d&&['programs','sensors'].includes(this.tab)?this.overview():''}
@@ -269,7 +281,16 @@ class LightManagerCard extends HTMLElement {
       }).join(', '));
   }
   statusPage(){return `<div class="toolbar"><h2>Lampenstatus</h2></div>${this.warningList()}
-    ${Object.keys(this.data.status).length?Object.entries(this.data.status).sort(([a],[b])=>this.entityName(a).localeCompare(this.entityName(b))).map(([e,s])=>`<div class="row"><div class="main"><strong>${this.user(this.entityName(e))}</strong><p>${this.user(s.kind==='fallback'?this.t('Rückfallverhalten'):s.program)} · ${lmEsc(this.t(LM_KINDS[s.kind]||'Rückfallverhalten'))}<br><small>${lmEsc(e)} · Aktuell: ${lmEsc(this._hass.states[e]?.state||'nicht verfügbar')}</small></p></div><span class="tag on">${lmEsc(s.mode==='scene'?'Szene':s.mode==='on'?'Ein':'Aus')}</span></div>`).join(''):this.empty('Kein aktives Programm.','')}<hr class="divider"><h3>Letzte Schaltbefehle</h3><div class="history">${this.data.history.slice(0,15).map(h=>`<p>${this.time(h.time)} · ${lmEsc(this.historyMessage(h.message))}</p>`).join('')||'<small>Noch keine Schaltbefehle.</small>'}</div>`;}
+    ${Object.keys(this.data.status).length?Object.entries(this.data.status).sort(([a],[b])=>this.entityName(a).localeCompare(this.entityName(b))).map(([e,s])=>`<div class="row"><div class="main"><strong>${this.user(this.entityName(e))}</strong><p>${this.user(s.kind==='fallback'?this.t('Rückfallverhalten'):s.program)} · ${lmEsc(this.t(LM_KINDS[s.kind]||'Rückfallverhalten'))}</p></div><span class="tag on">${lmEsc(s.mode==='scene'?'Szene':s.mode==='on'?'Ein':'Aus')}</span></div>`).join(''):this.empty('Kein aktives Programm.','')}`;}
+  dailyHistory(){
+    const rows=[...(this.data.daily_history||[])].sort((a,b)=>a.time.localeCompare(b.time));
+    if(!rows.length)return `<p class="version-info">${this.language()==='en'?'No switching commands executed today.':'Heute wurden noch keine Schaltungen ausgeführt.'}</p>`;
+    return `<div class="daily-history" role="list">${rows.map(row=>{
+      const label=this.language()==='en'?(row.error?'Failed':'Completed'):(row.error?'Fehlgeschlagen':'Erfolgreich');
+      const time=new Date(row.time).toLocaleTimeString(this.language(),{hour:'2-digit',minute:'2-digit',timeZone:this.data.timezone});
+      return `<div class="daily-history-row ${row.error?'failed':'completed'}" role="listitem"><time datetime="${lmEsc(row.time)}">${lmEsc(time)}</time><div class="daily-command"><strong>${this.user((row.entities||[]).map(e=>this.entityName(e)).join(', '))}</strong><small>${lmEsc(this.actionText(row.action))}</small>${row.error?`<small class="failure-reason">${lmEsc(this.historyMessage(row.message))}</small>`:''}</div><span class="command-result">${this.icon(row.error?'failure':'success')}${label}</span></div>`;
+    }).join('')}</div>`;
+  }
   settings(){const c=this.config;
     const fold=(section,label)=>this.btn('fold-settings',this.chevron(this.settingsOpen.has(section))+`<span>${label}</span>`,`data-section="${section}" aria-expanded="${this.settingsOpen.has(section)}" aria-controls="settings-${section}"`,'settings-fold');
     return `<section class="settings-group"><div class="settings-row"><h3>Sprache</h3><div class="language-picker">${this.btn('language','🇩🇪 DE',`data-language="de" aria-pressed="${this.language()==='de'}" title="Deutsch"`)}${this.btn('language','🇬🇧 EN',`data-language="en" aria-pressed="${this.language()==='en'}" title="Englisch"`)}</div></div></section>
@@ -278,6 +299,7 @@ class LightManagerCard extends HTMLElement {
       <div id="settings-lamps" ${this.settingsOpen.has('lamps')?'':'hidden'}>${this.lampSettings()}</div></section>
       <section class="settings-group" data-settings="sensors"><div class="settings-row">${fold('sensors','Sensoren')}${this.btn('select-sensors','Sensoren auswählen','','primary')}</div><div id="settings-sensors" ${this.settingsOpen.has('sensors')?'':'hidden'}>${c.sensors.map(v=>`<div class="row"><div class="main"><strong>${this.user(this.entityName(v.entity))}</strong> <small class="settings-sensor-value">${lmEsc(this.readingValue(v.entity,this.readingKind(v.entity)))}</small></div><div class="list-tools">${this.editBtn('sensors',v.entity)}</div></div>`).join('')||'<p class="version-info">Keine Einträge.</p>'}</div></section>
       <section class="settings-group"><div class="settings-row"><h3>Lampenstatus</h3>${this.btn('tab','Anzeigen','data-tab="status"')}</div></section>
+      <section class="settings-group" data-settings="daily-history"><div class="settings-row">${fold('daily-history',this.language()==='en'?"Today's switching commands":'Heutige Schaltungen')}</div><div id="settings-daily-history" ${this.settingsOpen.has('daily-history')?'':'hidden'}>${this.dailyHistory()}</div></section>
       <section class="settings-group"><h3>Sicherung</h3><div class="toolbar backup-actions">${this.btn('export','Sicherung erstellen')}${this.btn('import','Sicherung wiederherstellen')}</div><input type="file" id="lm-backup" accept="application/json,.json" hidden></section>
       <p class="version-info">Oberfläche ${LM_VERSION} · Integration ${lmEsc(this.data.version)}</p>`;
   }
@@ -468,7 +490,7 @@ class LightManagerCard extends HTMLElement {
       <p>When switching on, set brightness and choose the last color setting, white temperature, a color or an eligible Hue scene. A Hue scene is offered when its entity ID matches the technical light name followed by an underscore for every selected light entity.</p>
       <p>Opening contacts have priority over motion, then illuminance, then time programs. Within the same sensor priority, the higher program wins. For time programs the latest due action takes precedence. At the same time, a one-time action takes precedence over a recurring one, then list order decides.</p>
       <h3>Readings and backups</h3>
-      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Recent commands in Light status use light names. Settings contains light status, backup and restore, vacation mode, and the DE/EN language selector.</p>`;
+      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. The clock and sensor icons next to Programs open the time and sensor views. Settings contains light status, backup and restore, vacation mode, and the DE/EN language selector.</p>`;
     return `
       <h3>Einstellungen</h3>
       <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
@@ -485,7 +507,7 @@ class LightManagerCard extends HTMLElement {
       <p>Beim Einschalten kannst du Helligkeit und Farbe einstellen. Zur Wahl stehen die letzte Einstellung, Weißtöne, eine Farbe oder eine passende Hue-Szene. Eine Szene wird angeboten, wenn ihre Entitäts-ID für jede gewählte Lichtentität zum technischen Lampennamen mit anschließendem Unterstrich passt.</p>
       <p>Öffnungskontakte haben Vorrang vor Bewegung, dann folgen Helligkeit und Zeitprogramme. Bei gleichem Sensorvorrang gewinnt das weiter oben gespeicherte Programm. Bei Zeitprogrammen zählt die jüngste fällige Aktion. Bei gleicher Uhrzeit hat die Einmalaktion Vorrang vor der wiederkehrenden Aktion, danach entscheidet die Listenreihenfolge.</p>
       <h3>Messwerte und Sicherung</h3>
-      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. Unter Lampenstatus zeigen die letzten Schaltbefehle die Lampennamen. In den Einstellungen findest du Lampenstatus, Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
+      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Die Uhr- und Sensorsymbole neben Programme öffnen die jeweiligen Ansichten. In den Einstellungen findest du Lampenstatus, Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
   }
   setPath(path,value){const keys=path.split('.');let obj=this.editor.value;for(const k of keys.slice(0,-1))obj=obj[k];obj[keys.at(-1)]=value;}
   input(e){const t=e.target;if(this.editor&&t.dataset.contactStates){this.editor.contactInputs[t.dataset.contactStates]=t.value;return;}if(t.hasAttribute('data-lamp-search')){for(const list of this.shadowRoot.querySelectorAll('.lamp-selection'))this.filterLightRows(list);return;}if(this.editor&&t.dataset.season){this.editor.seasonInputs??={};this.editor.seasonInputs[t.dataset.season]=t.value;return;}if(this.editor&&t.hasAttribute('data-brightness')){const i=Number(t.dataset.brightness);this.editor.value.actions[i].brightness=Number(t.value);this.shadowRoot.querySelector(`[data-brightness-value="${i}"]`).textContent=t.value+' %';return;}if(this.editor&&t.hasAttribute('data-white')){const i=Number(t.dataset.white),a=this.editor.value.actions[i];a.kelvin=Number(t.dataset.maxKelvin)-Number(t.value);const out=this.shadowRoot.querySelector(`[data-white-value="${i}"]`);if(out)out.textContent=a.kelvin+' K';return;}if(!this.editor||!t.dataset.path||t.type==='checkbox'||t.tagName==='SELECT')return;

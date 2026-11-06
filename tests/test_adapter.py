@@ -284,3 +284,30 @@ class AdapterTests(IsolatedAsyncioTestCase):
         await self.m.save(c,0)
         self.assertEqual(self.m.engine.config['programs'][0]['once_date'],'2026-11-01')
         self.hass.services.async_call.assert_not_called()
+
+
+class DailyHistoryTests(IsolatedAsyncioTestCase):
+    setUp = AdapterTests.setUp
+    async def test_daily_history_survives_restart_with_more_than_sixty_commands(self):
+        command = {'entities': ['light.flur'], 'action': action(mode='off')}
+        for _ in range(75):
+            self.m.log('light.flur → off', command=command)
+        self.m.log('Migration completed.')
+        await self.m.persist()
+        saved = deepcopy(self.m.store.async_save.call_args.args[0])
+        self.assertEqual(len(saved['daily_history']), 75)
+        restored = adapter.Manager(self.hass)
+        restored.store.async_load.return_value = saved
+        await restored.load()
+        self.assertEqual(len(restored.snapshot()['daily_history']), 75)
+        self.assertEqual(restored.daily_history[-1]['action']['mode'], 'off')
+
+    async def test_daily_history_uses_local_midnight_and_includes_failed_calls(self):
+        self.now = at('2026-11-01T22:59:00Z')
+        command = {'entities': ['light.flur'], 'action': action(mode='off')}
+        self.m.log('light.flur: Bridge unavailable', error=True, command=command)
+        self.assertTrue(self.m.snapshot()['daily_history'][0]['error'])
+        self.now = at('2026-11-01T23:01:00Z')
+        self.assertEqual(self.m.snapshot()['daily_history'], [])
+        await self.m.persist()
+        self.assertEqual(self.m.daily_history, [])
