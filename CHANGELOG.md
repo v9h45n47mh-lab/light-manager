@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Match the mobile Programs tab width and spacing to Shutter Manager.
+
 ## 1.1.0
 
 - Match Shutter Manager navigation icons and placement.

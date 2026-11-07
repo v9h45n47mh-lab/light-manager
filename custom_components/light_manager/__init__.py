@@ -28,7 +28,7 @@ from homeassistant.helpers.sun import get_astral_event_date
 from .engine import Engine, validate, restrict_scene_config, scene_matches
 
 DOMAIN = 'light_manager'
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
