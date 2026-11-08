@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.6
+
+- Add a Vacation filter beside + Program to show programs that are not paused during vacation.
+
 ## 1.1.5
 
 - Hide program sorting and copying on mobile screens. Keep the enable switch and edit button on one row.
