@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Expand light status directly in Settings using the section heading. Remove the Show button.
+
 ## 1.1.1
 
 - Match the mobile Programs tab width and spacing to Shutter Manager.
