@@ -1,5 +1,5 @@
-/* Light Manager 1.1.4 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.1.4';
+/* Light Manager 1.1.5 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.1.5';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -44,7 +44,8 @@ button,input,select{font:inherit}button{color:var(--lm-accent);border:0;backgrou
   .tabs button{flex:0 0 auto;white-space:nowrap;padding:14px 8px;font-size:13px}
   button.settings-button{width:44px;min-width:44px}
   button.icon,.modal-head button{min-width:44px;min-height:44px}
-  .program-head>.list-tools{display:grid;grid-template-columns:repeat(3,44px);gap:0;justify-items:center}
+  .program-head>.list-tools{display:grid;grid-template-columns:repeat(2,44px);gap:0;justify-items:center;flex-shrink:0}
+  .program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}
   .program-head>.list-tools button.icon{padding:0}
   .program-head .tags{margin-left:28px;overflow-wrap:anywhere}
   .editor-action-head>.list-tools{margin-left:0;gap:4px}
@@ -479,7 +480,7 @@ class LightManagerCard extends HTMLElement {
       <h3>Settings</h3>
       <p>Use <b>Select lights</b> and <b>Select sensors</b> to add Home Assistant entities. The pickers show names and entity IDs. Lights are grouped by their Home Assistant area. Use the arrows to reorder areas. Lights within an area are alphabetical. The sensor list shows current readings or states. For opening contacts with custom states, enter the exact open and closed values, separated by commas.</p>
       <h3>Programs</h3>
-      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Expanded programs use compact action spacing. Each compact entry shows the weekdays and, for sensor programs, the validity window. Use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
+      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Expanded programs use compact action spacing. Each compact entry shows the weekdays and, for sensor programs, the validity window. On wider screens, use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Mobile screens show only the enable switch and edit button. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
       <p>Actions can have names and can be expanded or collapsed together in the editor. Set the weekdays and, if needed, enable the season restriction and enter dates as DD.MM. The browser remembers program, group and readings-panel expansion for each user.</p>
       <h3>Time program</h3>
       <p>Actions can use a fixed time, sunrise or sunset. Solar actions support an offset. The calculated switching time respects the earliest and latest times. The daily schedule hides past recurring times. Use <b>Skip</b> to omit an upcoming action for today. Use <b>+ Additional action</b> to schedule a one-time action for later today.</p>
@@ -496,7 +497,7 @@ class LightManagerCard extends HTMLElement {
       <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
       <h3>Programme</h3>
       <p>Die größeren Überschriften für Zeitprogramme und Sensorprogramme sind linksbündig mit den Programmnamen und lassen sich auf- und zuklappen.</p>
-      <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Aufgeklappte Programme zeigen die Schaltaktionen mit kompakten Abständen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Mit den Pfeilen änderst du die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
+      <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Aufgeklappte Programme zeigen die Schaltaktionen mit kompakten Abständen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Auf breiten Bildschirmen änderst du mit den Pfeilen die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Mobil werden nur der Aktivschalter und das Bearbeiten-Symbol angezeigt. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
       <p>Schaltaktionen können eigene Namen haben und im Editor gemeinsam auf- oder zugeklappt werden. Wähle die Wochentage und bei Bedarf <b>Saison einschränken</b>. Die Saisonfelder verwenden TT.MM. Der Browser merkt sich je Benutzer den Aufklappzustand der Programmgruppen, Programme und Messwerte.</p>
       <h3>Zeitprogramm</h3>
       <p>Als Auslöser stehen Uhrzeit, Sonnenaufgang und Sonnenuntergang zur Wahl. Bei Sonnenzeiten kannst du einen Versatz einstellen. Die berechnete Schaltzeit berücksichtigt <b>Frühestens</b> und <b>Spätestens</b>. Die Tagesübersicht blendet vergangene wiederkehrende Schaltzeiten aus. Mit <b>Auslassen</b> überspringst du eine bevorstehende Aktion für heute. Über <b>+ Zusätzliche Aktion</b> planst du eine einmalige Schaltung für später am selben Tag.</p>

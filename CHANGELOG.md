@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.5
+
+- Hide program sorting and copying on mobile screens. Keep the enable switch and edit button on one row.
+
 ## 1.1.4
 
 - Reduce spacing between actions and their detail lines in expanded programs.
