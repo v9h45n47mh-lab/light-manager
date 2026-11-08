@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.3
+
+- Reduce space below program weekdays to keep the program list compact.
+- Publish explicitly marked release commits through GitHub Actions after tests and repository, path, domain and version checks.
+
 ## 1.1.2
 
 - Expand light status directly in Settings using the section heading. Remove the Show button.

@@ -22,3 +22,55 @@ jobs:
       - run: python -m pip install -r tests/requirements.txt
       - run: python -m unittest discover -s tests -q
       - run: node --check custom_components/light_manager/frontend/light-manager-card.js
+      - name: Verify release identity
+        run: python scripts/check_release.py
+
+  publish:
+    if: ${{ github.repository == 'v9h45n47mh-lab/light-manager' && github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[publish-release]') }}
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify identity and prepare release
+        id: metadata
+        run: |
+          python - <<'PY'
+          import os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from check_release import validate_release
+          version, notes = validate_release()
+          Path('../light-manager-release-notes.md').write_text(notes + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'version={version}\ntag=v{version}\n')
+          PY
+      - name: Build and verify package
+        env:
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          python scripts/check_release.py
+          python scripts/build_release.py
+      - name: Publish checked Light Manager commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: v9h45n47mh-lab/light-manager
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.metadata.outputs.version }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          asset="../Light-Manager-${RELEASE_VERSION}-GitHub.zip"
+          mv "../Light-Manager-${RELEASE_VERSION}.zip" "$asset"
+          gh release create "$RELEASE_TAG" \
+            --repo v9h45n47mh-lab/light-manager \
+            --target "$RELEASE_COMMIT" \
+            --title "Light Manager $RELEASE_VERSION" \
+            --notes-file ../light-manager-release-notes.md \
+            "$asset"
