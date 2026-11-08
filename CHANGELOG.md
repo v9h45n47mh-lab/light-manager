@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4
+
+- Reduce spacing between actions and their detail lines in expanded programs.
+
 ## 1.1.3
 
 - Reduce space below program weekdays to keep the program list compact.
