@@ -38,7 +38,7 @@ const server=http.createServer((req,res)=>{
   const card=document.querySelector('light-manager-card');
   card.hass={user:{id:'test'},states:Object.fromEntries(catalog.map(x=>[x.entity,{state:x.state,attributes:{...x.attributes,friendly_name:x.name}}])),callWS:async msg=>{
    host.calls.push(msg);
-   if(msg.type==='light_manager/save'){await window.validateConfig(msg.config);host.config=structuredClone(msg.config);host.revision++;}
+   if(msg.type==='light_manager/save'){if(host.failSave)throw Error('Save denied');await window.validateConfig(msg.config);host.config=structuredClone(msg.config);host.revision++;}
    return {version,schema:4,revision:host.revision,config:structuredClone(host.config),catalog,status:{'light.flur':{kind:'time',mode:'on',program:'Evening'}},rules:[],warnings:[],history:[],daily_history:[{time:'2026-11-10T08:00:00Z',entities:['light.flur'],action:{mode:'off'},error:false}],planned:[],areas:[],lamp_areas:{},sun:{sunrise:'2026-11-10T06:30:00Z',sunset:'2026-11-10T16:00:00Z'},today:'2026-11-10',timezone:'Europe/Berlin'};
   }};
  },{fixture,version});
@@ -93,6 +93,18 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),false);
  await page.locator('.program-head .toggle').first().click();
  assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),true);
+ await page.locator('[data-op="edit"][data-section="programs"]').last().click();
+ await page.locator('[data-op="fold-action"]').first().click();
+ assert.equal(await page.locator('[data-array="actions.0.sensors"]').count(),1);
+ await page.locator('[data-path="name"]').fill('Motion retained after failure');
+ await page.evaluate(()=>host.failSave=true);
+ await page.locator('[data-op="commit"]').click();
+ await page.getByRole('alert').filter({hasText:'Save denied'}).waitFor();
+ assert.equal(await page.locator('[data-path="name"]').inputValue(),'Motion retained after failure');
+ assert.equal(await page.locator('dialog').evaluate(e=>e.open),true);
+ await page.evaluate(()=>host.failSave=false);
+ await page.locator('[data-op="commit"]').click();
+ await page.locator('dialog').waitFor({state:'detached'});
  await nav('settings').click();await page.locator('[data-language="en"]').click();
  assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.0.0'));
  await section('sensors').click();

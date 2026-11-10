@@ -362,11 +362,11 @@ class LightManagerCard extends HTMLElement {
       ${!d?this.empty('Integration unter Geräte & Dienste hinzufügen.',''):
         (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?`<article class="guide">${versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}${this.guide()}</article>`:this.programPage())}</div>`;
     const previousDialog=this.shadowRoot.querySelector('dialog');
-    if(ed&&!previousDialog)this.dialogOpener=this.shadowRoot.activeElement;
     previousDialog?.close();
     this.shadowRoot.querySelector('.dialog-host').innerHTML=ed?this.dialog():'';
     const modal=this.shadowRoot.querySelector('dialog');
     if(modal){
+      modal.querySelector('[data-ui="close-dialog"]').disabled=!!this.busy;
       modal.addEventListener('cancel',event=>{event.preventDefault();if(!this.busy){this.editor=null;this.error='';this.render();}});
       modal.addEventListener('close',()=>{if(this.editor===ed&&modal.isConnected){this.editor=null;this.error='';this.render();}});
       modal.showModal();
