@@ -225,7 +225,7 @@ class LightManagerCard extends HTMLElement {
     if(ed){const form=this.shadowRoot.querySelector('.form');if(form)form.scrollTop=scroll;
       if(!sameEditor)this.shadowRoot.querySelector('.form input,.form select')?.focus({preventScroll:true});
       requestAnimationFrame(()=>{if(this.editor===ed&&form?.isConnected)form.scrollTop=scroll;});}
-    for(const node of this.shadowRoot.querySelectorAll('.program-title>span,.ride-info>strong,.row-text>strong,.sensor-label,.cover-option strong,.cover-option small,.ride-fold-text strong'))node.setAttribute('data-user-content','');
+    for(const node of this.shadowRoot.querySelectorAll('.program-title>span,.ride-info>strong,.row-text>strong,.sensor-label,.cover-option strong,.cover-option small,.ride-fold-text strong,.ride-fold-text>span,.daily-command>strong,[data-lm-target]>span,[data-lm-member]>span'))node.setAttribute('data-user-content','');
     this.translateDom(this.shadowRoot);
     if(focusState?.path){
       const input=[...this.shadowRoot.querySelectorAll('[data-path]')].find(el=>el.dataset.path===focusState.path);
@@ -330,13 +330,13 @@ class LightManagerCard extends HTMLElement {
   }
   check(label,path){return checkboxGroup({id:'lm-check-'+path.replaceAll('.','-'),label:'',items:[{id:'yes',label:this.t(label)}],values:this.value(path)?['yes']:[],action:'legacy-selection'}).replace('<input ',`<input data-path="${path}" `);}
   choices(label,path,items,suffix=''){const args={id:'lm-choices-'+path.replaceAll('.','-')+(suffix?'-'+suffix:''),label:this.t(label),values:this.value(path)||[],action:'legacy-selection'};
-    return '<div class="full">'+(path==='days'?weekdayPicker({...args,labels:LM_DAYS.map(x=>this.t(x))}):checkboxGroup({...args,items:items.map(x=>({id:x.id,label:x.label||x.name,description:x.description}))})).replaceAll('<input ',`<input data-array="${path}" `)+'</div>';
+    return '<div class="full">'+(path==='days'?weekdayPicker({...args,labels:LM_DAYS.map(x=>this.t(x))}):checkboxGroup({...args,items:items.map(x=>({id:x.id,label:x.label||x.name,description:x.description}))})).replaceAll('<input ',`<input data-array="${path}" `).replaceAll('<span>',path==='days'?'<span>':'<span data-user-content>')+'</div>';
   }
   dialog(){const ed=this.editor,section=ed.section,v=ed.value,picker=['lamp_selection','sensor_selection'].includes(section);let content='';const title={lamps:'Lampe',sensors:'Sensor',rooms:'Zimmer',zones:'Zone',programs:'Programm',lamp_selection:'Lampen auswählen',sensor_selection:'Sensoren auswählen'}[section];
     if(picker){
       const lamps=section==='lamp_selection',saved=lamps?this.config.lamps:this.config.sensors;
       const entities=[...new Set([...this.catalog.filter(x=>lamps?x.entity.startsWith('light.'):x.entity.startsWith('binary_sensor.')||x.entity.startsWith('sensor.')).map(x=>x.entity),...saved.map(l=>l.entity)])].sort();
-      const items=entities.map(id=>({id,name:this.catalog.find(x=>x.entity===id)?.name||saved.find(x=>x.entity===id)?.name||id}));
+      const items=entities.map(id=>({id,name:this.catalog.find(x=>x.entity===id)?.name||saved.find(x=>x.entity===id)?.name||id})).sort((a,b)=>a.name.localeCompare(b.name,this.language(),{sensitivity:'base',numeric:true}));
       content='<div class="full">'+multiSelect({id:'lm-entity-selection',label:this.t(title),items:items.map(x=>({id:x.id,label:x.name,description:x.id})),values:v.entities,selectedFirst:lamps,action:'lm-entity-selection',searchLabel:this.t('Suchen'),disabled:this.busy})+'</div>';
     }else{
       if(section==='lamps')content=`<div class="field full"><span>Licht-Entität</span><span data-user-content class="hint">${lmEsc(v.entity)}</span></div>`;

@@ -155,7 +155,7 @@ const server=http.createServer((req,res)=>{
   await page.locator('[data-colormode="0"]').selectOption('color');
   await page.locator('#lm-colour-0 .colour-wheel').focus();await page.keyboard.press('Home');
   assert.deepEqual(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].rgb),[255,255,255]);
-  await page.evaluate(()=>host.catalog.push({entity:'scene.flur_new',name:'New scene',state:'scening',attributes:{}}));
+  await page.evaluate(()=>{const i=host.catalog.findIndex(x=>x.entity==='scene.flur_new');if(i>=0)host.catalog.splice(i,1);host.catalog.push({entity:'scene.flur_new',name:'New scene',state:'scening',attributes:{}});});
   await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
   assert.equal(await page.locator('[data-colormode="0"] option[value="scene.flur_new"]').count(),1);
   await page.locator('[data-colormode="0"]').selectOption('scene.flur_new');
@@ -164,6 +164,12 @@ const server=http.createServer((req,res)=>{
   await page.locator('#lm-season [data-season-enabled]').check();
   await page.locator('#lm-season-start').fill('01.11.');
   await page.locator('#lm-season-end').fill('30.11.');
+  await page.locator('[data-lm-target]').first().click();
+  await page.locator('[data-array="targets"][value="l"]').uncheck();
+  assert.deepEqual(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].targets),[]);
+  await page.locator('[data-array="targets"][value="l"]').check();
+  assert.deepEqual(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].targets),['l']);
+
 
   await page.screenshot({path:path.join(root,'test-results/kit-qa-dialog-'+width+'.png'),fullPage:true});
   assert.equal(await page.locator('dialog').evaluate(e=>e.scrollWidth>e.clientWidth),false);
@@ -201,6 +207,17 @@ const server=http.createServer((req,res)=>{
  await page.locator('[data-op="commit"]').click();
  await page.locator('dialog').waitFor({state:'detached'});
  await nav('settings').click();
+ const backup=JSON.stringify({product:'Light Manager',version,config:await page.evaluate(()=>host.config)});
+ let revision=await page.evaluate(()=>host.revision);
+ await page.locator('#lm-backup input[type=file]').setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(backup)});
+ await page.locator('#lm-confirm').waitFor();
+ await page.locator('#lm-confirm [data-ui-cancel-action]').click();
+ assert.equal(await page.evaluate(()=>host.revision),revision);
+ await page.locator('#lm-backup input[type=file]').setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(backup)});
+ await page.locator('#lm-confirm [data-action="lm-confirm-yes"]').click();
+ await page.waitForFunction(r=>host.revision===r+1,revision);
+ const download=page.waitForEvent('download');await page.locator('[data-action="lm-export"]').click();
+ assert.match((await download).suggestedFilename(),/^Light-Manager-Sicherung-/);
  await page.locator('[data-op="select-lamps"]').click();
  await page.locator('#lm-entity-selection-search').fill('Hall');
  assert.equal(await page.locator('[data-selection-row]:visible').count(),1);
