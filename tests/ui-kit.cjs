@@ -43,6 +43,11 @@ const server=http.createServer((req,res)=>{
   }};
  },{fixture,version});
  await page.locator('[data-op="add"]').waitFor();
+ assert.equal(await page.locator('[data-op="add"][data-section="programs"] svg').count(),0);
+ assert.equal(await page.locator('[data-op="add"][data-section="programs"]').innerText(),'+ Programm');
+ assert.equal(await page.locator('[data-op="move-program"]').first().innerText(),'↑');
+ assert.equal(await page.locator('[data-op="move-program"]').nth(1).innerText(),'↓');
+ assert.equal(await page.locator('[data-op="move-program"] svg').count(),0);
  const nav=id=>page.locator('[data-action="navigate"][data-page="'+id+'"]');
  const section=id=>page.locator('[data-settings="'+id+'"] > .settings-heading-row > .settings-fold');
  for(const width of [1100,390,320]){

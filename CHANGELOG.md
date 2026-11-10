@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Match the + Program label and shafted sorting arrows to Shutter Manager.
+
 ## 1.2.0
 
 - Migrate navigation, icons, controls, settings sections, forms and native dialogs to the locally bundled HA UI Kit 1.0.0.
