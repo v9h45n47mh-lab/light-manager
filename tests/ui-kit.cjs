@@ -73,9 +73,18 @@ const server=http.createServer((req,res)=>{
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator('.list-tools');
   if(width<600){assert.equal(await controls.locator('[data-op="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),false);}
-  await page.locator('[data-op="filter-vacation"]').click();
-  assert.equal(await page.locator('.program-title').count(),2);
-  await page.locator('[data-op="filter-vacation"]').click();
+  assert.equal(await page.locator('[data-op="filter-vacation"]').count(),0);
+  assert.equal(await page.locator('.program-title').count(),3);
+  const group=page.locator('[data-program-group="time"]');
+  const geometry=await group.evaluate(e=>{const h=e.getBoundingClientRect(),c=e.lastElementChild.getBoundingClientRect();return {right:h.right-c.right,count:e.lastElementChild.textContent};});
+  assert.equal(geometry.count,'2');assert.ok(Math.abs(geometry.right)<1);
+  await group.click();
+  assert.equal(await group.getAttribute('aria-expanded'),'false');
+  await page.evaluate(()=>document.querySelector('light-manager-card').render());
+  assert.equal(await group.getAttribute('aria-expanded'),'false');
+  assert.equal(await page.locator('#lm-program-group-time-content').isVisible(),false);
+  await group.click();
+  assert.equal(await page.locator('#lm-program-group-time-content').isVisible(),true);
   const edit=page.locator('[data-op="edit"][data-section="programs"]').first();
   await edit.click();
   assert.equal(await page.locator('dialog').evaluate(e=>e.open),true);
@@ -118,8 +127,8 @@ const server=http.createServer((req,res)=>{
  await page.evaluate(()=>host.failSave=false);
  await page.locator('[data-op="commit"]').click();
  await page.locator('dialog').waitFor({state:'detached'});
- await nav('settings').click();await page.locator('[data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.1.0'));
+ await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-language="en"]').click();
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.2.0'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -130,8 +139,8 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('ha-card').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 32, 32)');
  await page.screenshot({path:path.join(root,'test-results/kit-qa-dark.png'),fullPage:true});
  await nav('help').click();
- assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.1.0'));
+ assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.2.0'));
  assert.deepEqual(errors,[]);
- console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, filters, program editing, native dialog and Escape.');
+ console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, group counts and folds, program editing, native dialog and Escape.');
  await browser.close();server.close();
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

@@ -1,6 +1,6 @@
-import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, programOrderButtons, navigation, section as uiSection, row as uiRow, toggle as uiToggle, filterButton, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI} from './family-ui/1.1.0/family-ui.js';
-/* Light Manager 1.2.2 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.2.2';
+import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, programOrderButtons, navigation, section as uiSection, row as uiRow, toggle as uiToggle, programGroup, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI} from './family-ui/1.2.0/family-ui.js';
+/* Light Manager 1.2.3 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.2.3';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -17,8 +17,8 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .tags>div{display:flex;flex-wrap:wrap;gap:2px 10px}
 .time-heading{justify-content:space-between}
 .program-group+.program-group{margin-top:16px}
-.program-group-head{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px 9px 0;text-align:left;color:inherit}
-.program-group-head strong{font-size:16px}
+
+
 .muted{font-size:12px;color:var(--lm-muted);line-height:1.5}
 .content{padding:8px 16px 16px}
 .list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -96,7 +96,7 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 @media(max-width:600px){.content{padding:4px 12px 12px}
 .program-head{align-items:center;gap:8px}
 .program-title{font-size:14px}
-.program-group-head strong{font-size:15px}
+
 .action{gap:10px}
 .choices.stack{grid-template-columns:1fr}
 .editor-action{padding:12px}
@@ -190,14 +190,14 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .program-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .program-heading{flex:1;min-width:0}
 .program-title{display:flex;align-items:center;gap:8px;padding:0;text-align:left;color:var(--primary-text-color,#212121);font-size:14px}
-.program-group-head{display:flex;align-items:center;gap:8px;width:100%;padding-left:0;color:var(--primary-text-color,#212121);text-align:left}
-.program-group-head strong{font-size:16px}.program-group-head small{margin-left:auto}
+
+
 .content{padding:8px 16px 16px}.form{min-height:0;overscroll-behavior:contain}.full{min-width:0}
 .alert{padding:12px 16px;font-size:13px;color:var(--error-color,#db4437);background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent)}
 .toggle>span:last-child{display:none}.settings-heading-row h3{font-size:14px}
 .sun-value .ui-icon{color:var(--primary-color,#03a9f4)}.sensor-state .ui-icon{width:18px;height:18px}
 .dialog-host footer .error{flex-basis:100%}
-@media(max-width:600px){.content{padding:4px 12px 12px}.program-head{gap:8px}.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,40px);gap:0;flex-shrink:0}.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}.program-title{font-size:14px}.program-group-head strong{font-size:15px}.fields{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.content{padding:4px 12px 12px}.program-head{gap:8px}.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,40px);gap:0;flex-shrink:0}.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}.program-title{font-size:14px}.fields{grid-template-columns:minmax(0,1fr)}}
 
 `;
 
@@ -413,22 +413,22 @@ class LightManagerCard extends HTMLElement {
   }
   overview(){const open=this.overviewVisible();return `<div class="overview-panel">${this.btn('overview',this.chevron(open)+'<span>Messwerte</span>',`aria-expanded="${open}" aria-controls="lm-overview"`,'overview-toggle')}<section class="overview" id="lm-overview" aria-label="${this.tab==='sensors'?'Sensorwerte':'Sonnenzeiten und Sensorwerte'}" ${open?'':'hidden'}>${this.overviewContent()}</section></div>`;}
   programPage(){
-    const programs=this.config.programs.filter(p=>!p.once_date&&(!this.vacationFilter||!p.pause_in_vacation));
+    const programs=this.config.programs.filter(p=>!p.once_date);
     const groups=[
       ['time','Zeitprogramme',programs.filter(p=>p.kind==='time')],
       ['sensor','Sensorprogramme',programs.filter(p=>p.kind!=='time')]
     ];
-    return `<div class="page-actions">${filterButton({label:this.language()==='en'?'Vacation':'Urlaub',action:'legacy',selected:!!this.vacationFilter}).replace('<button ','<button data-op="filter-vacation" ')}${this.btn('add','+ Programm','data-section="programs"','primary')}</div>
-    ${!programs.length?this.empty(this.vacationFilter?(this.language()==='en'?'No vacation programs.':'Keine Programme für den Urlaub.'):'Noch keine Programme.',''):groups.filter(([, , items])=>items.length).map(([key,label,items])=>{
+    return `<div class="page-actions"><span></span>${this.btn('add','+ Programm','data-section="programs"','primary')}</div>
+    ${!programs.length?this.empty('Noch keine Programme.',''):groups.filter(([, , items])=>items.length).map(([key,label,items])=>{
       const open=!this.collapsedProgramGroups?.has(key);
-      return `<section class="program-group">${this.btn('fold-program-group',this.chevron(open)+`<strong>${this.t(label)}</strong><small>${items.length}</small>`,`data-group="${key}" aria-expanded="${open}"`,'program-group-head')}
-      ${open?items.map((p,index)=>`<section class="program ${p.enabled?'':'disabled'}"><div class="program-head"><div class="program-heading">
+      const content=items.map((p,index)=>`<section class="program ${p.enabled?'':'disabled'}"><div class="program-head"><div class="program-heading">
       ${this.btn('expand',this.chevron(this.expanded.has(p.id))+`<span>${this.user(p.name)}</span>`,`data-id="${lmEsc(p.id)}" aria-expanded="${this.expanded.has(p.id)}"`,'program-title')}
       <div class="tags">
         <div><span>${[...p.days].sort((a,b)=>a-b).map(d=>this.t(LM_DAYS[d])).join(' · ')}</span>${p.kind==='time'?'':`<span>${p.start}–${p.end}</span>`}</div>
       </div></div>
       <div class="list-tools">${programOrderButtons({programId:p.id,index,count:items.length,action:'legacy',disabled:this.busy,upLabel:this.t('Programm nach oben'),downLabel:this.t('Programm nach unten')}).replaceAll('<button ','<button data-op="move-program" ').replaceAll('data-program=', 'data-id=').replace('data-direction="up"','data-delta="-1"').replace('data-direction="down"','data-delta="1"')}${this.toggle(p.enabled,'Programm '+p.name+' aktivieren',`data-toggle="${lmEsc(p.id)}"`)}${this.btn('copy-program',this.icon('copy'),`data-id="${lmEsc(p.id)}" title="Programm kopieren" aria-label="Programm kopieren"`,'icon')}${this.editBtn('programs',p.id)}</div></div>
-      ${this.expanded.has(p.id)?`<div class="actions">${p.actions.map(a=>`<div class="action ${a.enabled?'':'disabled'}"><div class="action-info"><strong>${this.user(a.name?.trim()||this.targetNames(a))}</strong><span>${lmEsc(this.when(a,p.kind))}</span><small>${lmEsc(this.actionText(a))}</small></div>${this.toggle(a.enabled,'Aktion '+this.targetNames(a)+' aktivieren',`data-action-toggle="${lmEsc(a.id)}" data-program="${lmEsc(p.id)}"`)}</div>`).join('')}</div>`:''}</section>`).join(''):''}</section>`;
+      ${this.expanded.has(p.id)?`<div class="actions">${p.actions.map(a=>`<div class="action ${a.enabled?'':'disabled'}"><div class="action-info"><strong>${this.user(a.name?.trim()||this.targetNames(a))}</strong><span>${lmEsc(this.when(a,p.kind))}</span><small>${lmEsc(this.actionText(a))}</small></div>${this.toggle(a.enabled,'Aktion '+this.targetNames(a)+' aktivieren',`data-action-toggle="${lmEsc(a.id)}" data-program="${lmEsc(p.id)}"`)}</div>`).join('')}</div>`:''}</section>`).join('');
+      return programGroup({id:'lm-program-group-'+key,title:this.t(label),count:items.length,content,expanded:open}).replace('data-ui="collapse"',`data-ui="collapse" data-program-group="${key}"`);
     }).join('')}`;
   }
   dateHeading(){return this.data.today?new Intl.DateTimeFormat(this.language()==='en'?'en-GB':'de-DE',{weekday:'long',day:'2-digit',month:'2-digit',timeZone:this.data.timezone||'Europe/Berlin'}).format(new Date(this.data.today+'T12:00:00Z')):this.t('Heute');}
@@ -656,7 +656,7 @@ class LightManagerCard extends HTMLElement {
       <h3>Settings</h3>
       <p>Use <b>Select lights</b> and <b>Select sensors</b> to add Home Assistant entities. The pickers show names and entity IDs. Lights are grouped by their Home Assistant area. Use the arrows to reorder areas. Lights within an area are alphabetical. The sensor list shows current readings or states. For opening contacts with custom states, enter the exact open and closed values, separated by commas.</p>
       <h3>Programs</h3>
-      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. The Vacation filter beside + Program shows programs without Pause during vacation. Press it again to show all programs. Expanded programs use compact action spacing. Each compact entry shows the weekdays and, for sensor programs, the validity window. On wider screens, use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Mobile screens show only the enable switch and edit button. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
+      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Vacation mode is available in Settings. Group counts are aligned to the right. Expanded programs use compact action spacing. Each compact entry shows the weekdays and, for sensor programs, the validity window. On wider screens, use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Mobile screens show only the enable switch and edit button. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
       <p>Actions can have names and can be expanded or collapsed together in the editor. Set the weekdays and, if needed, enable the season restriction and enter dates as DD.MM. The browser remembers program, group and readings-panel expansion for each user.</p>
       <h3>Time program</h3>
       <p>Actions can use a fixed time, sunrise or sunset. Solar actions support an offset. The calculated switching time respects the earliest and latest times. The daily schedule hides past recurring times. Use <b>Skip</b> to omit an upcoming action for today. Use <b>+ Additional action</b> to schedule a one-time action for later today.</p>
@@ -667,13 +667,13 @@ class LightManagerCard extends HTMLElement {
       <p>When switching on, set brightness and choose the last color setting, white temperature, a color or an eligible Hue scene. A Hue scene is offered when its entity ID matches the technical light name followed by an underscore for every selected light entity.</p>
       <p>Opening contacts have priority over motion, then illuminance, then time programs. Within the same sensor priority, the higher program wins. For time programs the latest due action takes precedence. At the same time, a one-time action takes precedence over a recurring one, then list order decides.</p>
       <h3>Readings and backups</h3>
-      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. Use + Program to create a program. The light-blue sorting arrows ↑ and ↓ and + Program come directly from the shared UI Kit. All controls use the locally bundled HA UI Kit 1.1.0. The compact Programs tab and the clock and sensor icons use the same mobile arrangement as Shutter Manager. Light status can be expanded directly in Settings using its heading. Settings also contains backup and restore, vacation mode, and the DE/EN language selector.</p>`;
+      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. Use + Program to create a program. The light-blue sorting arrows ↑ and ↓ and + Program come directly from the shared UI Kit. All controls use the locally bundled HA UI Kit 1.2.0. The compact Programs tab and the clock and sensor icons use the same mobile arrangement as Shutter Manager. Light status can be expanded directly in Settings using its heading. Settings also contains backup and restore, vacation mode, and the DE/EN language selector.</p>`;
     return `
       <h3>Einstellungen</h3>
       <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
       <h3>Programme</h3>
       <p>Die größeren Überschriften für Zeitprogramme und Sensorprogramme sind linksbündig mit den Programmnamen und lassen sich auf- und zuklappen.</p>
-      <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Der Filter Urlaub neben + Programm zeigt Programme ohne „Im Urlaub aussetzen“. Erneutes Drücken zeigt alle Programme. Aufgeklappte Programme zeigen die Schaltaktionen mit kompakten Abständen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Auf breiten Bildschirmen änderst du mit den Pfeilen die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Mobil werden nur der Aktivschalter und das Bearbeiten-Symbol angezeigt. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
+      <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Den Urlaubsmodus findest du in den Einstellungen. Die Anzahl der Programme steht rechtsbündig in der Gruppenüberschrift. Aufgeklappte Programme zeigen die Schaltaktionen mit kompakten Abständen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Auf breiten Bildschirmen änderst du mit den Pfeilen die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Mobil werden nur der Aktivschalter und das Bearbeiten-Symbol angezeigt. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
       <p>Schaltaktionen können eigene Namen haben und im Editor gemeinsam auf- oder zugeklappt werden. Wähle die Wochentage und bei Bedarf <b>Saison einschränken</b>. Die Saisonfelder verwenden TT.MM. Der Browser merkt sich je Benutzer den Aufklappzustand der Programmgruppen, Programme und Messwerte.</p>
       <h3>Zeitprogramm</h3>
       <p>Als Auslöser stehen Uhrzeit, Sonnenaufgang und Sonnenuntergang zur Wahl. Bei Sonnenzeiten kannst du einen Versatz einstellen. Die berechnete Schaltzeit berücksichtigt <b>Frühestens</b> und <b>Spätestens</b>. Die Tagesübersicht blendet vergangene wiederkehrende Schaltzeiten aus. Mit <b>Auslassen</b> überspringst du eine bevorstehende Aktion für heute. Über <b>+ Zusätzliche Aktion</b> planst du eine einmalige Schaltung für später am selben Tag.</p>
@@ -684,7 +684,7 @@ class LightManagerCard extends HTMLElement {
       <p>Beim Einschalten kannst du Helligkeit und Farbe einstellen. Zur Wahl stehen die letzte Einstellung, Weißtöne, eine Farbe oder eine passende Hue-Szene. Eine Szene wird angeboten, wenn ihre Entitäts-ID für jede gewählte Lichtentität zum technischen Lampennamen mit anschließendem Unterstrich passt.</p>
       <p>Öffnungskontakte haben Vorrang vor Bewegung, dann folgen Helligkeit und Zeitprogramme. Bei gleichem Sensorvorrang gewinnt das weiter oben gespeicherte Programm. Bei Zeitprogrammen zählt die jüngste fällige Aktion. Bei gleicher Uhrzeit hat die Einmalaktion Vorrang vor der wiederkehrenden Aktion, danach entscheidet die Listenreihenfolge.</p>
       <h3>Messwerte und Sicherung</h3>
-      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Über + Programm legst du ein Programm an. Die hellblauen Sortierpfeile ↑ und ↓ und + Programm kommen direkt aus dem gemeinsamen UI Kit. Alle Bedienelemente verwenden den lokal mitgelieferten HA UI Kit 1.1.0. Der kompakte Tab Programme und die Uhr- und Sensorsymbole sind mobil wie im Shutter Manager angeordnet. Lampenstatus lässt sich direkt in den Einstellungen über die Überschrift aufklappen. Dort findest du auch Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
+      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Über + Programm legst du ein Programm an. Die hellblauen Sortierpfeile ↑ und ↓ und + Programm kommen direkt aus dem gemeinsamen UI Kit. Alle Bedienelemente verwenden den lokal mitgelieferten HA UI Kit 1.2.0. Der kompakte Tab Programme und die Uhr- und Sensorsymbole sind mobil wie im Shutter Manager angeordnet. Lampenstatus lässt sich direkt in den Einstellungen über die Überschrift aufklappen. Dort findest du auch Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
   }
   setPath(path,value){const keys=path.split('.');let obj=this.editor.value;for(const k of keys.slice(0,-1))obj=obj[k];obj[keys.at(-1)]=value;}
   input(e){const t=e.target;if(this.editor&&t.dataset.contactStates){this.editor.contactInputs[t.dataset.contactStates]=t.value;return;}if(t.hasAttribute('data-lamp-search')){for(const list of this.shadowRoot.querySelectorAll('.lamp-selection'))this.filterLightRows(list);return;}if(this.editor&&t.dataset.season){this.editor.seasonInputs??={};this.editor.seasonInputs[t.dataset.season]=t.value;return;}if(this.editor&&t.hasAttribute('data-brightness')){const i=Number(t.dataset.brightness);this.editor.value.actions[i].brightness=Number(t.value);this.shadowRoot.querySelector(`[data-brightness-value="${i}"]`).textContent=t.value+' %';return;}if(this.editor&&t.hasAttribute('data-white')){const i=Number(t.dataset.white),a=this.editor.value.actions[i];a.kelvin=Number(t.dataset.maxKelvin)-Number(t.value);const out=this.shadowRoot.querySelector(`[data-white-value="${i}"]`);if(out)out.textContent=a.kelvin+' K';return;}if(!this.editor||!t.dataset.path||t.type==='checkbox'||t.tagName==='SELECT')return;
@@ -731,18 +731,23 @@ class LightManagerCard extends HTMLElement {
   resetFolds(){this.settingsOpen.clear();this.memberListsOpen.clear();}
   async click(e){
     const fold=e.target.closest('[data-ui="collapse"]');
-    if(fold){const id=fold.closest('[data-settings]').dataset.settings;
-      fold.getAttribute('aria-expanded')==='true'?this.settingsOpen.delete(id):this.settingsOpen.add(id);return;}
+    if(fold){
+      if(fold.dataset.programGroup){
+        this.collapsedProgramGroups??=new Set();
+        fold.getAttribute('aria-expanded')==='true'?this.collapsedProgramGroups.add(fold.dataset.programGroup):this.collapsedProgramGroups.delete(fold.dataset.programGroup);
+        this.saveProgramFolds();return;
+      }
+      const id=fold.closest('[data-settings]')?.dataset.settings;
+      if(id)fold.getAttribute('aria-expanded')==='true'?this.settingsOpen.delete(id):this.settingsOpen.add(id);return;}
     const b=e.target.closest('button[data-op]');if(!b||this.busy)return;const op=b.dataset.op;
     if(op==='language'){this._language=b.dataset.language;try{localStorage.setItem(this.languageKey,this._language);}catch{}this.render();}
-    else if(op==='filter-vacation'){this.vacationFilter=!this.vacationFilter;this.render();}
     else if(op==='tab'){this.resetFolds();this.tab=b.dataset.tab;this.error='';this.render();}
     else if(op==='settings'){this.resetFolds();this.tab='settings';this.render();}
     else if(op==='fold-members'){const key=b.dataset.section+':'+b.dataset.id;this.memberListsOpen.has(key)?this.memberListsOpen.delete(key):this.memberListsOpen.add(key);this.render();}
     else if(op==='move-program'){
       const c=lmClone(this.config), program=c.programs.find(p=>p.id===b.dataset.id);
       if(!program||program.once_date)return;
-      const group=c.programs.filter(p=>!p.once_date&&(!this.vacationFilter||!p.pause_in_vacation)&&(p.kind==='time')===(program.kind==='time'));
+      const group=c.programs.filter(p=>!p.once_date&&(p.kind==='time')===(program.kind==='time'));
       const neighbor=group[group.indexOf(program)+Number(b.dataset.delta)];
       if(!neighbor)return;
       const index=c.programs.indexOf(program), next=c.programs.indexOf(neighbor);

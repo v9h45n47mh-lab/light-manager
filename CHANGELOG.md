@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3
+
+- Update the bundled HA UI Kit to 1.2.0 and use its shared program groups with right-aligned counts.
+- Remove the Vacation filter from Programs; vacation mode remains in Settings.
+- Preserve group expansion state, program sorting and existing automation permissions.
+
 ## 1.2.2
 
 - Update the locally bundled HA UI Kit to 1.1.0.
