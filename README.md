@@ -31,4 +31,4 @@ Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem ande
 
 ## Gemeinsame Oberfläche
 
-Diese Version liefert HA UI Kit 1.0.0 lokal mit. Navigation, Symbole, Farben, Schriften, Einstellungsbereiche, Bedienelemente und native Dialoge verwenden den gemeinsamen Baukasten. Weitere Installationen oder externe Laufzeitverbindungen sind dafür nicht erforderlich.
+Diese Version liefert HA UI Kit 1.1.0 lokal mit. Navigation, Symbole, Farben, Schriften, Einstellungsbereiche, Bedienelemente und native Dialoge verwenden den gemeinsamen Baukasten. Weitere Installationen oder externe Laufzeitverbindungen sind dafür nicht erforderlich.
