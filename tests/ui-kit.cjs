@@ -6,7 +6,7 @@ const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
 fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const version=JSON.parse(fs.readFileSync(path.join(root,'custom_components/light_manager/manifest.json'))).version;
-const fixture=JSON.parse(execFileSync('python3',['-c',`import sys,json;sys.path.insert(0,'tests');from test_engine import fixture,program,action;print(json.dumps(fixture(program('Evening','time',[action('on'),action('off',mode='off')]),program('Motion','motion',[action('motion',sensors=['binary_sensor.bewegung'])],pause_in_vacation=True))))`],{cwd:root,encoding:'utf8'}));
+const fixture=JSON.parse(execFileSync('python3',['-c',`import sys,json;sys.path.insert(0,'tests');from test_engine import fixture,program,action;print(json.dumps(fixture(program('Evening','time',[action('on'),action('off',mode='off')]),program('Second','time',[action('second')]),program('Motion','motion',[action('motion',sensors=['binary_sensor.bewegung'])],pause_in_vacation=True))))`],{cwd:root,encoding:'utf8'}));
 const server=http.createServer((req,res)=>{
  const url=new URL(req.url,'http://localhost');
  if(url.pathname==='/'){res.setHeader('Content-Type','text/html');res.end('<html lang="de"><style>body{margin:12px;font-family:Arial;--primary-color:#81d4fa}light-manager-card{display:block;max-width:800px;margin:auto}</style><light-manager-card></light-manager-card></html>');return;}
@@ -48,6 +48,14 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('[data-op="move-program"]').first().innerText(),'↑');
  assert.equal(await page.locator('[data-op="move-program"]').nth(1).innerText(),'↓');
  assert.equal(await page.locator('[data-op="move-program"] svg').count(),0);
+ assert.equal(await page.locator('.program-add').count(),1);
+ assert.equal(await page.locator('[data-op="move-program"]').first().isDisabled(),true);
+ assert.equal(await page.locator('[data-op="move-program"]').nth(3).isDisabled(),true);
+ assert.equal(await page.locator('[data-op="move-program"]').nth(1).evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
+ await page.locator('[data-op="move-program"]').nth(1).click();
+ await page.waitForFunction(()=>host.config.programs[0].name==='Second');
+ await page.locator('[data-op="move-program"]').nth(1).click();
+ await page.waitForFunction(()=>host.config.programs[0].name==='Evening');
  const nav=id=>page.locator('[data-action="navigate"][data-page="'+id+'"]');
  const section=id=>page.locator('[data-settings="'+id+'"] > .settings-heading-row > .settings-fold');
  for(const width of [1100,390,320]){
@@ -64,9 +72,9 @@ const server=http.createServer((req,res)=>{
   assert.equal(await nav('settings').evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator('.list-tools');
-  if(width<600)assert.equal(await controls.locator('[data-op="copy-program"]').isVisible(),false);
+  if(width<600){assert.equal(await controls.locator('[data-op="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),false);}
   await page.locator('[data-op="filter-vacation"]').click();
-  assert.equal(await page.locator('.program-title').count(),1);
+  assert.equal(await page.locator('.program-title').count(),2);
   await page.locator('[data-op="filter-vacation"]').click();
   const edit=page.locator('[data-op="edit"][data-section="programs"]').first();
   await edit.click();
@@ -111,7 +119,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('[data-op="commit"]').click();
  await page.locator('dialog').waitFor({state:'detached'});
  await nav('settings').click();await page.locator('[data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.0.0'));
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.1.0'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -122,7 +130,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('ha-card').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 32, 32)');
  await page.screenshot({path:path.join(root,'test-results/kit-qa-dark.png'),fullPage:true});
  await nav('help').click();
- assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.0.0'));
+ assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.1.0'));
  assert.deepEqual(errors,[]);
  console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, filters, program editing, native dialog and Escape.');
  await browser.close();server.close();

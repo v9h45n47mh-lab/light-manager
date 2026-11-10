@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2
+
+- Update the locally bundled HA UI Kit to 1.1.0.
+- Use shared + Program and light-blue sorting controls; remove local control styling.
+- Preserve mobile visibility, group ordering, vacation filtering and existing permissions.
+
 ## 1.2.1
 
 - Match the + Program label and shafted sorting arrows to Shutter Manager.

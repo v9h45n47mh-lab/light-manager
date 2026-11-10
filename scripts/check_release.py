@@ -33,7 +33,7 @@ def validate_release():
         raise ValueError('Frontend and integration versions must match')
     ui_root = COMPONENT / 'frontend'
     lock = json.loads((ui_root / 'family-ui.lock.json').read_text())
-    if lock['name'] != '@v9h45n47mh-lab/ha-ui-kit' or lock['version'] != '1.0.0':
+    if lock['name'] != '@v9h45n47mh-lab/ha-ui-kit' or lock['version'] != '1.1.0':
         raise ValueError('Unexpected UI Kit dependency')
     kit = ui_root / 'family-ui' / lock['version']
     for name, checksum in lock['files'].items():
@@ -43,7 +43,7 @@ def validate_release():
             raise ValueError('UI Kit checksum mismatch')
     if hashlib.sha256((kit / 'LICENSE').read_bytes()).hexdigest() != lock['licenseSha256']:
         raise ValueError('UI Kit license checksum mismatch')
-    if "'./family-ui/1.0.0/family-ui.js'" not in frontend:
+    if "'./family-ui/1.1.0/family-ui.js'" not in frontend:
         raise ValueError('Missing pinned UI Kit import')
     tag = os.environ.get('RELEASE_TAG', 'v' + version)
     if tag != 'v' + version:
