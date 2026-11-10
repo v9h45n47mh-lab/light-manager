@@ -28,3 +28,7 @@ type: custom:light-manager-card
 Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.2.0` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
 
 [Changelog](CHANGELOG.md) · [MIT-Lizenz](LICENSE)
+
+## Gemeinsame Oberfläche
+
+Diese Version liefert HA UI Kit 1.0.0 lokal mit. Navigation, Symbole, Farben, Schriften, Einstellungsbereiche, Bedienelemente und native Dialoge verwenden den gemeinsamen Baukasten. Weitere Installationen oder externe Laufzeitverbindungen sind dafür nicht erforderlich.

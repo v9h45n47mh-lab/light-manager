@@ -4,6 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {execFileSync}=require('node:child_process');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
+fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const version=JSON.parse(fs.readFileSync(path.join(root,'custom_components/light_manager/manifest.json'))).version;
 const fixture=JSON.parse(execFileSync('python3',['-c',`import sys,json;sys.path.insert(0,'tests');from test_engine import fixture,program,action;print(json.dumps(fixture(program('Evening','time',[action('on'),action('off',mode='off')]),program('Motion','motion',[action('motion',sensors=['binary_sensor.bewegung'])],pause_in_vacation=True))))`],{cwd:root,encoding:'utf8'}));
 const server=http.createServer((req,res)=>{
@@ -66,8 +67,14 @@ const server=http.createServer((req,res)=>{
   await edit.click();
   assert.equal(await page.locator('dialog').evaluate(e=>e.open),true);
   await page.locator('[data-path="name"]').fill('Evening edited '+width);
+  await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
+  assert.equal(await page.locator('[data-path="name"]').inputValue(),'Evening edited '+width);
+  assert.equal(await page.locator('[data-path="name"]').evaluate(e=>e.getRootNode().activeElement===e),true);
+  assert.equal(await page.locator('.choices.days input:checked').count(),7);
   await page.locator('[data-op="fold-action"]').first().click();
   assert.equal(await page.locator('[data-brightness="0"]').count(),1);
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-dialog-'+width+'.png'),fullPage:true});
+  assert.equal(await page.locator('dialog').evaluate(e=>e.scrollWidth>e.clientWidth),false);
   await page.locator('[data-path="name"]').focus();
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').shadowRoot.activeElement.closest('dialog')!==null),true);
@@ -77,9 +84,15 @@ const server=http.createServer((req,res)=>{
   await edit.click();
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('dialog').count(),0);
-  const png=path.join(root,'../kit-qa-'+width+'.png');
+  const png=path.join(root,'test-results/kit-qa-'+width+'.png');
   await page.screenshot({path:png,fullPage:true});
  }
+ await nav('programs').click();
+ const programSwitch=page.locator('.program-head .toggle').first();
+ await programSwitch.click();
+ assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),false);
+ await page.locator('.program-head .toggle').first().click();
+ assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),true);
  await nav('settings').click();await page.locator('[data-language="en"]').click();
  assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.0.0'));
  await section('sensors').click();
@@ -90,7 +103,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>host.config.sensors[0].name),'Door renamed');
  await page.evaluate(()=>{document.documentElement.style.setProperty('--ha-card-background','#202020');document.documentElement.style.setProperty('--primary-text-color','#eeeeee');document.documentElement.style.setProperty('--secondary-text-color','#bbbbbb');});
  assert.equal(await page.locator('ha-card').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 32, 32)');
- await page.screenshot({path:path.join(root,'../kit-qa-dark.png'),fullPage:true});
+ await page.screenshot({path:path.join(root,'test-results/kit-qa-dark.png'),fullPage:true});
  await nav('help').click();
  assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.0.0'));
  assert.deepEqual(errors,[]);

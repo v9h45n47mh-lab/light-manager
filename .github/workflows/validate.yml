@@ -32,7 +32,7 @@ jobs:
         if: always()
         with:
           name: light-manager-ui-kit-screenshots
-          path: ../kit-qa-*.png
+          path: test-results/kit-qa-*.png
       - name: Verify release identity
         run: python scripts/check_release.py
 
