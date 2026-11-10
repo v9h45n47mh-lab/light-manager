@@ -61,14 +61,14 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(async({theme})=>{
    const dark=theme==='dark';
    for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
-   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.2.0/family-ui.js');
+   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.2.1/family-ui.js');
    const card=document.querySelector('light-manager-card');
    document.querySelector('#kit-reference')?.remove();
    const ref=document.createElement('div');ref.id='kit-reference';ref.style.cssText='position:absolute;left:-10000px;top:0;width:'+card.clientWidth+'px';document.body.append(ref);
    const root=ref.attachShadow({mode:'open'});
    const programs=card.config.programs.filter(p=>!p.once_date);
    const groups=[['time','Zeitprogramme',programs.filter(p=>p.kind==='time')],['sensor','Sensorprogramme',programs.filter(p=>p.kind!=='time')]];
-   root.innerHTML='<style>'+kit.UI_CSS+'</style><ha-card><main>'+groups.map(([key,title,items])=>kit.programGroup({id:'lm-program-group-'+key,title,count:items.length,expanded:!card.collapsedProgramGroups.has(key),content:items.map((p,index)=>kit.programRow({id:p.id,title:p.name,meta:[p.days.slice().sort((a,b)=>a-b).map(d=>['Mo','Di','Mi','Do','Fr','Sa','So'][d]).join(' · '),...(p.kind==='time'?[]:[p.start+'–'+p.end])],enabled:p.enabled,expanded:card.expanded.has(p.id),index,count:items.length,content:p.actions.map(a=>kit.actionRow({title:a.name?.trim()||card.targetNames(a),description:card.when(a,p.kind),detail:card.actionText(a),enabled:a.enabled,actions:kit.toggle({label:'Aktion '+card.targetNames(a)+' aktivieren',checked:a.enabled,action:'legacy-toggle'})})).join('')})).join('')})).join('')+'</main></ha-card>';
+   root.innerHTML='<style>'+kit.UI_CSS+'</style><ha-card><main>'+groups.map(([key,title,items])=>kit.programGroup({id:'lm-program-group-'+key,title,count:items.length,expanded:!card.collapsedProgramGroups.has(key),content:items.map((p,index)=>kit.programRow({id:p.id,title:p.name,meta:[p.days.slice().sort((a,b)=>a-b).map(d=>['Mo','Di','Mi','Do','Fr','Sa','So'][d]).join(' · '),...(p.kind==='time'?[]:[p.start+'–'+p.end])],enabled:p.enabled,expanded:card.expanded.has(p.id),index,count:items.length,content:p.actions.map(a=>kit.actionRow({title:a.name?.trim()||card.targetNames(a),description:card.when(a,p.kind),detail:card.actionText(a),enabled:a.enabled,actions:kit.toggle({label:'Aktion '+card.targetNames(a)+' aktivieren',checked:a.enabled,action:'legacy-toggle',iconOnly:true})})).join('')})).join('')})).join('')+'</main></ha-card>';
   },{theme});
   const mismatch=await page.evaluate(()=>{
    const actual=document.querySelector('light-manager-card').shadowRoot,expected=document.querySelector('#kit-reference').shadowRoot;
@@ -107,6 +107,8 @@ const server=http.createServer((req,res)=>{
   assert.equal(await nav('settings').evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator(':scope > .toolbar');
+  assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth;}),false);
+  if(width<600)assert.ok(await page.locator('.program-title').first().evaluate(e=>e.getBoundingClientRect().width)>150);
   if(width<600){assert.equal(await controls.locator('[data-action="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),false);}
   assert.equal(await page.locator('[data-op="filter-vacation"]').count(),0);
   assert.equal(await page.locator('.program-title').count(),3);
@@ -173,7 +175,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('[data-op="commit"]').click();
  await page.locator('dialog').waitFor({state:'detached'});
  await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.2.0'));
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.2.1'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -184,7 +186,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('ha-card').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 32, 32)');
  await page.screenshot({path:path.join(root,'test-results/kit-qa-dark.png'),fullPage:true});
  await nav('help').click();
- assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.2.0'));
+ assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.2.1'));
  assert.deepEqual(errors,[]);
  console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, group counts and folds, program editing, native dialog and Escape.');
  await browser.close();server.close();
