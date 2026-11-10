@@ -1,6 +1,6 @@
-import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, programOrderButtons, navigation, section as uiSection, row as uiRow, toggle as uiToggle, programGroup, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI} from './family-ui/1.2.0/family-ui.js';
-/* Light Manager 1.2.3 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.2.3';
+import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, navigation, section as uiSection, row as uiRow, toggle as uiToggle, programGroup, programRow, actionRow, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI} from './family-ui/1.2.0/family-ui.js';
+/* Light Manager 1.2.4 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.2.4';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -14,13 +14,9 @@ const LM_DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const lmAction = () => ({id:lmId(),enabled:true,mode:'on',targets:[],brightness:100,kelvin:null,rgb:null,
   event:'fixed',time:'18:00',offset:0,earliest:'00:00',latest:'23:59',sensors:[],delay:120,lux_entity:'',lux_on:80,lux_off:150,on_delay:120,end_action:'restore',lux_end:'above',skips:[]});
 const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
-.tags>div{display:flex;flex-wrap:wrap;gap:2px 10px}
+
 .time-heading{justify-content:space-between}
-.program-group+.program-group{margin-top:16px}
 
-
-.muted{font-size:12px;color:var(--lm-muted);line-height:1.5}
-.content{padding:8px 16px 16px}
 .list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .tag{display:inline-flex;font-size:12px;color:var(--lm-muted);margin:0 10px 0 0}
 .tag.on{color:var(--lm-accent)}
@@ -28,19 +24,7 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .empty strong{display:block;font-weight:400}
 .alert{margin:8px 0;padding:10px 12px;border-radius:4px;background:color-mix(in srgb,var(--warning-color,#ffb300) 10%,transparent);color:var(--primary-text-color,#212121);font-size:13px;line-height:1.5}
 .alert.error{background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent);color:var(--error-color,#db4437)}
-.program{padding:10px 0 6px;border-bottom:1px solid var(--lm-line)}
-.program:last-child{border-bottom:0}
 
-
-
-
-.tags{display:grid;gap:4px;margin:6px 0 0 28px;font-size:12px;color:var(--lm-muted)}
-.program.disabled>.program-head,.action.disabled>.action-info{opacity:.55}
-.action{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0;margin-left:28px;border-top:1px solid var(--lm-line)}
-.program-head+.actions{margin-top:7px}
-.action-info{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
-.action-info strong{font-size:14px;font-weight:500}
-.action-info>span{font-size:13px}
 .summary{font-size:13px;line-height:1.5}
 .switch{display:flex;align-items:center;gap:8px;min-height:32px;font-size:13px}
 .overview-panel{border-bottom:1px solid var(--lm-line)}
@@ -93,11 +77,8 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .language-picker{display:flex;gap:8px}
 .guide{font-size:14px;line-height:1.65;padding:10px 0}
 .guide pre{background:var(--secondary-background-color,#f5f5f5);padding:12px;border-radius:4px;white-space:pre-wrap}
-@media(max-width:600px){.content{padding:4px 12px 12px}
+@media(max-width:600px){
 
-
-
-.action{gap:10px}
 .choices.stack{grid-template-columns:1fr}
 .editor-action{padding:12px}
 .editor-action-head{align-items:flex-start;flex-wrap:wrap;gap:8px}
@@ -167,9 +148,8 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .lamp-table .light-selection-divider{margin:5px 0}
 @media(max-width:600px){.planned-row[data-once-program] .planned-action{grid-column:2/-1;justify-self:end}
 }
-@media (max-width:600px){.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,44px);gap:0;justify-items:center;flex-shrink:0}
-.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}
-.program-head .tags{margin-left:28px;overflow-wrap:anywhere}
+@media (max-width:600px){
+
 .editor-action-head>.list-tools{margin-left:0;gap:4px}
 .time-heading{gap:4px}
 .choices:not(.days) label{min-height:44px}
@@ -188,16 +168,12 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 :host{--lm-accent:var(--primary-color,#03a9f4);--lm-muted:var(--secondary-text-color,#727272);--lm-line:var(--divider-color,#e0e0e0);--lm-bg:var(--ha-card-background,var(--card-background-color,#fff))}
 .list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
 
-
-
-
-
-.content{padding:8px 16px 16px}.form{min-height:0;overscroll-behavior:contain}.full{min-width:0}
+.form{min-height:0;overscroll-behavior:contain}.full{min-width:0}
 .alert{padding:12px 16px;font-size:13px;color:var(--error-color,#db4437);background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent)}
-.toggle>span:last-child{display:none}.settings-heading-row h3{font-size:14px}
+
 .sun-value .ui-icon{color:var(--primary-color,#03a9f4)}.sensor-state .ui-icon{width:18px;height:18px}
 .dialog-host footer .error{flex-basis:100%}
-@media(max-width:600px){.content{padding:4px 12px 12px}.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,40px);gap:0;flex-shrink:0}.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}.fields{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.fields{grid-template-columns:minmax(0,1fr)}}
 
 `;
 
@@ -249,6 +225,17 @@ class LightManagerCard extends HTMLElement {
       if(action==='navigate'){
         const page=data.page==='help'?'guide':data.page;
         this.resetFolds();this.tab=page;this.error='';this.render();
+      }
+      if(action==='edit-program'||action==='copy-program'){
+        this.open('programs',data.program,action==='copy-program');
+      }
+      if(action==='program-enabled'){
+        const input=document.createElement('input');input.type='checkbox';input.dataset.toggle=data.program;input.checked=checked;
+        this.change({target:input});
+      }
+      if(action==='move-program'){
+        const button=document.createElement('button');button.dataset.op='move-program';button.dataset.id=data.program;button.dataset.delta=data.direction==='up'?'-1':'1';
+        this.click({target:button});
       }
       if(action==='legacy-toggle'){
         const input=document.createElement('input');
@@ -352,7 +339,7 @@ class LightManagerCard extends HTMLElement {
   render(){const d=this.data,ed=this.editor,sameEditor=ed&&ed===this.renderedEditor;
     const focused=this.shadowRoot.activeElement;
     const focusState=sameEditor&&focused?.closest('dialog')?{path:focused.dataset.path,start:focused.selectionStart,end:focused.selectionEnd}:null;
-    if(ed&&!this.renderedEditor&&focused?.dataset.op)this.returnFocus={op:focused.dataset.op,id:focused.dataset.id,section:focused.dataset.section};
+    if(ed&&!this.renderedEditor&&(focused?.dataset.op||focused?.dataset.action))this.returnFocus={op:focused.dataset.op,id:focused.dataset.id,section:focused.dataset.section,action:focused.dataset.action,program:focused.dataset.program};
     const scroll=sameEditor?(this.shadowRoot.querySelector('.form')?.scrollTop||0):0;
     const navScroll=this.shadowRoot.querySelector('nav')?.scrollLeft||0;
     if(!this.shadowRoot.querySelector('ha-card'))this.shadowRoot.innerHTML='<style></style><ha-card></ha-card><div class="dialog-host"></div>';
@@ -360,10 +347,10 @@ class LightManagerCard extends HTMLElement {
     this.shadowRoot.querySelector('ha-card').innerHTML=`
       ${navigation({label:this.t('Lichtsteuerung'),items:[{id:'programs',label:this.t('Programme')},{id:'time',label:this.t('Zeitprogramm'),icon:'schedule'},{id:'sensors',label:this.t('Sensorprogramme'),icon:'sensors'}],active:this.tab==='guide'?'help':this.tab==='status'?'settings':this.tab,helpLabel:this.t('Anleitung'),settingsLabel:this.t('Einstellungen')})}
       ${d&&['programs','sensors'].includes(this.tab)?this.overview():''}
-      <div class="content">${this.error&&!ed?`<div class="alert error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}
+      <main>${this.error&&!ed?`<div class="alert error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}
       ${d&&d.version!==LM_VERSION?'<div class="alert error">Versionskonflikt. Home Assistant neu starten und Browser neu laden.</div>':''}
       ${!d?this.empty('Integration unter Geräte & Dienste hinzufügen.',''):
-        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?`<article class="guide">${versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}${this.guide()}</article>`:this.programPage())}</div>`;
+        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?`<article class="guide">${versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}${this.guide()}</article>`:this.programPage())}</main>`;
     const previousDialog=this.shadowRoot.querySelector('dialog');
     previousDialog?.close();
     this.shadowRoot.querySelector('.dialog-host').innerHTML=ed?this.dialog():'';
@@ -375,13 +362,14 @@ class LightManagerCard extends HTMLElement {
       modal.showModal();
     }else if(this.returnFocus){
       const f=this.returnFocus;
-      const button=[...this.shadowRoot.querySelectorAll('button[data-op]')].find(b=>b.dataset.op===f.op&&b.dataset.id===f.id&&b.dataset.section===f.section);
+      const button=[...this.shadowRoot.querySelectorAll('button')].find(b=>f.op?(b.dataset.op===f.op&&b.dataset.id===f.id&&b.dataset.section===f.section):(b.dataset.action===f.action&&b.dataset.program===f.program));
       button?.focus({preventScroll:true});this.returnFocus=null;
     }
     this.shadowRoot.querySelector('nav').scrollLeft=navScroll;
     if(ed){const form=this.shadowRoot.querySelector('.form');if(form)form.scrollTop=scroll;
       if(!sameEditor)this.shadowRoot.querySelector('.form input,.form select')?.focus({preventScroll:true});
       requestAnimationFrame(()=>{if(this.editor===ed&&form?.isConnected)form.scrollTop=scroll;});}
+    for(const node of this.shadowRoot.querySelectorAll('.program-title>span,.ride-info>strong'))node.setAttribute('data-user-content','');
     this.translateDom(this.shadowRoot);
     if(focusState?.path){
       const input=[...this.shadowRoot.querySelectorAll('[data-path]')].find(el=>el.dataset.path===focusState.path);
@@ -421,13 +409,12 @@ class LightManagerCard extends HTMLElement {
     return `<div class="page-actions"><span></span>${this.btn('add','+ Programm','data-section="programs"','primary')}</div>
     ${!programs.length?this.empty('Noch keine Programme.',''):groups.filter(([, , items])=>items.length).map(([key,label,items])=>{
       const open=!this.collapsedProgramGroups?.has(key);
-      const content=items.map((p,index)=>`<section class="program ${p.enabled?'':'disabled'}"><div class="program-head"><div class="program-heading">
-      ${this.btn('expand',this.chevron(this.expanded.has(p.id))+`<span>${this.user(p.name)}</span>`,`data-id="${lmEsc(p.id)}" aria-expanded="${this.expanded.has(p.id)}"`,'program-title')}
-      <div class="tags">
-        <div><span>${[...p.days].sort((a,b)=>a-b).map(d=>this.t(LM_DAYS[d])).join(' · ')}</span>${p.kind==='time'?'':`<span>${p.start}–${p.end}</span>`}</div>
-      </div></div>
-      <div class="toolbar list-tools">${programOrderButtons({programId:p.id,index,count:items.length,action:'legacy',disabled:this.busy,upLabel:this.t('Programm nach oben'),downLabel:this.t('Programm nach unten')}).replaceAll('<button ','<button data-op="move-program" ').replaceAll('data-program=', 'data-id=').replace('data-direction="up"','data-delta="-1"').replace('data-direction="down"','data-delta="1"')}${this.toggle(p.enabled,'Programm '+p.name+' aktivieren',`data-toggle="${lmEsc(p.id)}"`)}${this.btn('copy-program',this.icon('copy'),`data-id="${lmEsc(p.id)}" title="Programm kopieren" aria-label="Programm kopieren"`,'icon')}${this.editBtn('programs',p.id)}</div></div>
-      ${this.expanded.has(p.id)?`<div class="actions">${p.actions.map(a=>`<div class="action ${a.enabled?'':'disabled'}"><div class="action-info"><strong>${this.user(a.name?.trim()||this.targetNames(a))}</strong><span>${lmEsc(this.when(a,p.kind))}</span><small>${lmEsc(this.actionText(a))}</small></div>${this.toggle(a.enabled,'Aktion '+this.targetNames(a)+' aktivieren',`data-action-toggle="${lmEsc(a.id)}" data-program="${lmEsc(p.id)}"`)}</div>`).join('')}</div>`:''}</section>`).join('');
+      const content=items.map((p,index)=>programRow({
+        id:p.id,title:p.name,meta:[...[[...p.days].sort((a,b)=>a-b).map(d=>this.t(LM_DAYS[d])).join(' · ')],...(p.kind==='time'?[]:[p.start+'–'+p.end])],
+        enabled:p.enabled,expanded:this.expanded.has(p.id),index,count:items.length,disabled:this.busy,
+        content:p.actions.map(a=>actionRow({title:a.name?.trim()||this.targetNames(a),description:this.when(a,p.kind),detail:this.actionText(a),enabled:a.enabled,
+          actions:this.toggle(a.enabled,'Aktion '+this.targetNames(a)+' aktivieren',`data-action-toggle="${lmEsc(a.id)}" data-program="${lmEsc(p.id)}"`)})).join('')
+      })).join('');
       return programGroup({id:'lm-program-group-'+key,title:this.t(label),count:items.length,content,expanded:open}).replace('data-ui="collapse"',`data-ui="collapse" data-program-group="${key}"`);
     }).join('')}`;
   }
@@ -656,7 +643,7 @@ class LightManagerCard extends HTMLElement {
       <h3>Settings</h3>
       <p>Use <b>Select lights</b> and <b>Select sensors</b> to add Home Assistant entities. The pickers show names and entity IDs. Lights are grouped by their Home Assistant area. Use the arrows to reorder areas. Lights within an area are alphabetical. The sensor list shows current readings or states. For opening contacts with custom states, enter the exact open and closed values, separated by commas.</p>
       <h3>Programs</h3>
-      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Vacation mode is available in Settings. Group counts are aligned to the right. Expanded programs use compact action spacing. Each compact entry shows the weekdays and, for sensor programs, the validity window. On wider screens, use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Mobile screens show only the enable switch and edit button. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
+      <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Vacation mode is available in Settings. Group counts are aligned to the right. Program groups, rows and actions use the shared UI Kit layout, typography and controls without local style overrides. Each compact entry shows the weekdays and, for sensor programs, the validity window. On wider screens, use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Mobile screens show only the enable switch and edit button. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
       <p>Actions can have names and can be expanded or collapsed together in the editor. Set the weekdays and, if needed, enable the season restriction and enter dates as DD.MM. The browser remembers program, group and readings-panel expansion for each user.</p>
       <h3>Time program</h3>
       <p>Actions can use a fixed time, sunrise or sunset. Solar actions support an offset. The calculated switching time respects the earliest and latest times. The daily schedule hides past recurring times. Use <b>Skip</b> to omit an upcoming action for today. Use <b>+ Additional action</b> to schedule a one-time action for later today.</p>
@@ -673,7 +660,7 @@ class LightManagerCard extends HTMLElement {
       <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
       <h3>Programme</h3>
       <p>Die größeren Überschriften für Zeitprogramme und Sensorprogramme sind linksbündig mit den Programmnamen und lassen sich auf- und zuklappen.</p>
-      <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Den Urlaubsmodus findest du in den Einstellungen. Die Anzahl der Programme steht rechtsbündig in der Gruppenüberschrift. Aufgeklappte Programme zeigen die Schaltaktionen mit kompakten Abständen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Auf breiten Bildschirmen änderst du mit den Pfeilen die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Mobil werden nur der Aktivschalter und das Bearbeiten-Symbol angezeigt. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
+      <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Den Urlaubsmodus findest du in den Einstellungen. Die Anzahl der Programme steht rechtsbündig in der Gruppenüberschrift. Programmgruppen, Programmzeilen und Schaltaktionen verwenden Layout, Schrift und Bedienelemente des UI Kit ohne lokale Stilüberschreibungen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Auf breiten Bildschirmen änderst du mit den Pfeilen die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Mobil werden nur der Aktivschalter und das Bearbeiten-Symbol angezeigt. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
       <p>Schaltaktionen können eigene Namen haben und im Editor gemeinsam auf- oder zugeklappt werden. Wähle die Wochentage und bei Bedarf <b>Saison einschränken</b>. Die Saisonfelder verwenden TT.MM. Der Browser merkt sich je Benutzer den Aufklappzustand der Programmgruppen, Programme und Messwerte.</p>
       <h3>Zeitprogramm</h3>
       <p>Als Auslöser stehen Uhrzeit, Sonnenaufgang und Sonnenuntergang zur Wahl. Bei Sonnenzeiten kannst du einen Versatz einstellen. Die berechnete Schaltzeit berücksichtigt <b>Frühestens</b> und <b>Spätestens</b>. Die Tagesübersicht blendet vergangene wiederkehrende Schaltzeiten aus. Mit <b>Auslassen</b> überspringst du eine bevorstehende Aktion für heute. Über <b>+ Zusätzliche Aktion</b> planst du eine einmalige Schaltung für später am selben Tag.</p>
@@ -735,6 +722,11 @@ class LightManagerCard extends HTMLElement {
       if(fold.dataset.programGroup){
         this.collapsedProgramGroups??=new Set();
         fold.getAttribute('aria-expanded')==='true'?this.collapsedProgramGroups.add(fold.dataset.programGroup):this.collapsedProgramGroups.delete(fold.dataset.programGroup);
+        this.saveProgramFolds();return;
+      }
+      if(fold.classList.contains('program-title')){
+        const id=fold.getAttribute('aria-controls').slice(0,-'-content'.length);
+        fold.getAttribute('aria-expanded')==='true'?this.expanded.delete(id):this.expanded.add(id);
         this.saveProgramFolds();return;
       }
       const id=fold.closest('[data-settings]')?.dataset.settings;

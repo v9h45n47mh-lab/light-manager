@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.4
+
+- Render program groups, program rows and expanded actions with the shared HA UI Kit 1.2.0 components.
+- Remove local program typography, spacing, indentation and control styling.
+- Preserve ordering, copying, editing, enable switches and remembered expansion state.
+- Compare Desktop/mobile and light/dark rendering directly against the bundled UI Kit.
+
 ## 1.2.3
 
 - Update the bundled HA UI Kit to 1.2.0 and use its shared program groups with right-aligned counts.

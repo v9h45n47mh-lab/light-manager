@@ -45,17 +45,45 @@ const server=http.createServer((req,res)=>{
  await page.locator('[data-op="add"]').waitFor();
  assert.equal(await page.locator('[data-op="add"][data-section="programs"] svg').count(),0);
  assert.equal(await page.locator('[data-op="add"][data-section="programs"]').innerText(),'+ Programm');
- assert.equal(await page.locator('[data-op="move-program"]').first().innerText(),'↑');
- assert.equal(await page.locator('[data-op="move-program"]').nth(1).innerText(),'↓');
- assert.equal(await page.locator('[data-op="move-program"] svg').count(),0);
+ assert.equal(await page.locator('[data-action="move-program"]').first().innerText(),'↑');
+ assert.equal(await page.locator('[data-action="move-program"]').nth(1).innerText(),'↓');
+ assert.equal(await page.locator('[data-action="move-program"] svg').count(),0);
  assert.equal(await page.locator('.program-add').count(),1);
- assert.equal(await page.locator('[data-op="move-program"]').first().isDisabled(),true);
- assert.equal(await page.locator('[data-op="move-program"]').nth(3).isDisabled(),true);
- assert.equal(await page.locator('[data-op="move-program"]').nth(1).evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
- await page.locator('[data-op="move-program"]').nth(1).click();
+ assert.equal(await page.locator('[data-action="move-program"]').first().isDisabled(),true);
+ assert.equal(await page.locator('[data-action="move-program"]').nth(3).isDisabled(),true);
+ assert.equal(await page.locator('[data-action="move-program"]').nth(1).evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
+ await page.locator('[data-action="move-program"]').nth(1).click();
  await page.waitForFunction(()=>host.config.programs[0].name==='Second');
- await page.locator('[data-op="move-program"]').nth(1).click();
+ await page.locator('[data-action="move-program"]').nth(1).click();
  await page.waitForFunction(()=>host.config.programs[0].name==='Evening');
+ async function compareKit(theme,width){
+  await page.evaluate(async({theme})=>{
+   const dark=theme==='dark';
+   for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
+   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.2.0/family-ui.js');
+   const card=document.querySelector('light-manager-card');
+   document.querySelector('#kit-reference')?.remove();
+   const ref=document.createElement('div');ref.id='kit-reference';ref.style.cssText='position:absolute;left:-10000px;top:0;width:'+card.clientWidth+'px';document.body.append(ref);
+   const root=ref.attachShadow({mode:'open'});
+   const programs=card.config.programs.filter(p=>!p.once_date);
+   const groups=[['time','Zeitprogramme',programs.filter(p=>p.kind==='time')],['sensor','Sensorprogramme',programs.filter(p=>p.kind!=='time')]];
+   root.innerHTML='<style>'+kit.UI_CSS+'</style><ha-card><main>'+groups.map(([key,title,items])=>kit.programGroup({id:'lm-program-group-'+key,title,count:items.length,expanded:!card.collapsedProgramGroups.has(key),content:items.map((p,index)=>kit.programRow({id:p.id,title:p.name,meta:[p.days.slice().sort((a,b)=>a-b).map(d=>['Mo','Di','Mi','Do','Fr','Sa','So'][d]).join(' · '),...(p.kind==='time'?[]:[p.start+'–'+p.end])],enabled:p.enabled,expanded:card.expanded.has(p.id),index,count:items.length,content:p.actions.map(a=>kit.actionRow({title:a.name?.trim()||card.targetNames(a),description:card.when(a,p.kind),detail:card.actionText(a),enabled:a.enabled,actions:kit.toggle({label:'Aktion '+card.targetNames(a)+' aktivieren',checked:a.enabled,action:'legacy-toggle'})})).join('')})).join('')})).join('')+'</main></ha-card>';
+  },{theme});
+  const mismatch=await page.evaluate(()=>{
+   const actual=document.querySelector('light-manager-card').shadowRoot,expected=document.querySelector('#kit-reference').shadowRoot;
+   const selectors=['.program-group','.program-group-head','.program-group-head strong','.program-group-head>span:last-child','.program','.program-head','.program-title','.program-title>span','.tags','.tags>span','.program-head>.toolbar','.program-order button','.program-head .toggle','.switch-track','.switch-thumb','.program-head .edit-button','.ride','.ride-info','.ride-info strong','.ride-info>span','.ride-info small','.ride-actions'];
+   const props=['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','color','backgroundColor','padding','margin','gap','borderWidth','borderRadius','display','gridTemplateColumns','flexWrap','opacity'];
+   const failures=[];
+   for(const selector of selectors){const aa=[...actual.querySelectorAll(selector)],bb=[...expected.querySelectorAll(selector)];if(aa.length!==bb.length)failures.push(selector+': count');
+    aa.forEach((a,i)=>{const b=bb[i];if(!b)return;const sa=getComputedStyle(a),sb=getComputedStyle(b);for(const p of props)if(sa[p]!==sb[p])failures.push(selector+': '+p+' '+sa[p]+' != '+sb[p]);
+     if(a.getClientRects().length&&b.getClientRects().length){const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();for(const p of ['width','height'])if(Math.abs(ra[p]-rb[p])>.6)failures.push(selector+': '+p+' '+ra[p]+' != '+rb[p]);}
+    });
+   }return failures;
+  });
+  assert.deepEqual(mismatch,[],theme+' '+width+' must match unmodified UI Kit');
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-'+theme+'-'+width+'.png'),fullPage:true});
+  await page.evaluate(()=>document.querySelector('#kit-reference').remove());
+ }
  const nav=id=>page.locator('[data-action="navigate"][data-page="'+id+'"]');
  const section=id=>page.locator('[data-settings="'+id+'"] > .settings-heading-row > .settings-fold');
  for(const width of [1100,390,320]){
@@ -71,13 +99,8 @@ const server=http.createServer((req,res)=>{
   assert.equal(await page.locator('[data-page="settings"] .ui-icon').getAttribute('data-icon'),'settings');
   assert.equal(await nav('settings').evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
   await nav('programs').click();
-  const controls=page.locator('.program-head').first().locator('.list-tools');
-  if(width<600){
-   const layout=await page.locator('.program-head').first().evaluate(e=>{const title=e.querySelector('.program-title').getBoundingClientRect(),tags=e.querySelector('.tags').getBoundingClientRect();return {titleWidth:title.width,tagsTop:tags.top,titleBottom:title.bottom};});
-   assert.ok(layout.titleWidth>150,'Program name retains mobile width');
-   assert.ok(layout.tagsTop>=layout.titleBottom,'Weekdays appear below program name');
-  }
-  if(width<600){assert.equal(await controls.locator('[data-op="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),false);}
+  const controls=page.locator('.program-head').first().locator(':scope > .toolbar');
+  if(width<600){assert.equal(await controls.locator('[data-action="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),false);}
   assert.equal(await page.locator('[data-op="filter-vacation"]').count(),0);
   assert.equal(await page.locator('.program-title').count(),3);
   const group=page.locator('[data-program-group="time"]');
@@ -90,7 +113,17 @@ const server=http.createServer((req,res)=>{
   assert.equal(await page.locator('#lm-program-group-time-content').isVisible(),false);
   await group.click();
   assert.equal(await page.locator('#lm-program-group-time-content').isVisible(),true);
-  const edit=page.locator('[data-op="edit"][data-section="programs"]').first();
+  for(const theme of ['light','dark']){
+   await compareKit(theme,width);
+   await page.locator('.program-title').first().click();
+   assert.equal(await page.locator('.ride').first().isVisible(),true);
+   await page.evaluate(()=>document.querySelector('light-manager-card').render());
+   assert.equal(await page.locator('.program-title').first().getAttribute('aria-expanded'),'true');
+   await compareKit(theme,width);
+   await page.locator('.program-title').first().click();
+  }
+  await page.evaluate(()=>{document.documentElement.style.setProperty('--ha-card-background','#ffffff');document.documentElement.style.setProperty('--primary-text-color','#212121');document.documentElement.style.setProperty('--secondary-text-color','#727272');});
+  const edit=page.locator('[data-action="edit-program"]').first();
   await edit.click();
   assert.equal(await page.locator('dialog').evaluate(e=>e.open),true);
   await page.locator('[data-path="name"]').fill('Evening edited '+width);
@@ -120,7 +153,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),false);
  await page.locator('.program-head .toggle').first().click();
  assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),true);
- await page.locator('[data-op="edit"][data-section="programs"]').last().click();
+ await page.locator('[data-action="edit-program"]').last().click();
  await page.locator('[data-op="fold-action"]').first().click();
  assert.equal(await page.locator('[data-array="actions.0.sensors"]').count(),1);
  await page.locator('[data-path="name"]').fill('Motion retained after failure');
