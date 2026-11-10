@@ -30,10 +30,10 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .alert.error{background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent);color:var(--error-color,#db4437)}
 .program{padding:10px 0 6px;border-bottom:1px solid var(--lm-line)}
 .program:last-child{border-bottom:0}
-.program-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.program-heading{flex:1;min-width:0}
-.program-title{display:flex;align-items:center;gap:8px;padding:0;color:var(--primary-text-color,#212121);font-size:14px;text-align:left}
-.program-title span{overflow-wrap:anywhere}
+
+
+
+
 .tags{display:grid;gap:4px;margin:6px 0 0 28px;font-size:12px;color:var(--lm-muted)}
 .program.disabled>.program-head,.action.disabled>.action-info{opacity:.55}
 .action{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0;margin-left:28px;border-top:1px solid var(--lm-line)}
@@ -94,8 +94,8 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .guide{font-size:14px;line-height:1.65;padding:10px 0}
 .guide pre{background:var(--secondary-background-color,#f5f5f5);padding:12px;border-radius:4px;white-space:pre-wrap}
 @media(max-width:600px){.content{padding:4px 12px 12px}
-.program-head{align-items:center;gap:8px}
-.program-title{font-size:14px}
+
+
 
 .action{gap:10px}
 .choices.stack{grid-template-columns:1fr}
@@ -187,9 +187,9 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 /* Lighting-specific arrangement; shared controls come from UI_CSS. */
 :host{--lm-accent:var(--primary-color,#03a9f4);--lm-muted:var(--secondary-text-color,#727272);--lm-line:var(--divider-color,#e0e0e0);--lm-bg:var(--ha-card-background,var(--card-background-color,#fff))}
 .list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.program-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.program-heading{flex:1;min-width:0}
-.program-title{display:flex;align-items:center;gap:8px;padding:0;text-align:left;color:var(--primary-text-color,#212121);font-size:14px}
+
+
+
 
 
 .content{padding:8px 16px 16px}.form{min-height:0;overscroll-behavior:contain}.full{min-width:0}
@@ -197,7 +197,7 @@ const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .toggle>span:last-child{display:none}.settings-heading-row h3{font-size:14px}
 .sun-value .ui-icon{color:var(--primary-color,#03a9f4)}.sensor-state .ui-icon{width:18px;height:18px}
 .dialog-host footer .error{flex-basis:100%}
-@media(max-width:600px){.content{padding:4px 12px 12px}.program-head{gap:8px}.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,40px);gap:0;flex-shrink:0}.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}.program-title{font-size:14px}.fields{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.content{padding:4px 12px 12px}.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,40px);gap:0;flex-shrink:0}.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}.fields{grid-template-columns:minmax(0,1fr)}}
 
 `;
 
@@ -426,7 +426,7 @@ class LightManagerCard extends HTMLElement {
       <div class="tags">
         <div><span>${[...p.days].sort((a,b)=>a-b).map(d=>this.t(LM_DAYS[d])).join(' · ')}</span>${p.kind==='time'?'':`<span>${p.start}–${p.end}</span>`}</div>
       </div></div>
-      <div class="list-tools">${programOrderButtons({programId:p.id,index,count:items.length,action:'legacy',disabled:this.busy,upLabel:this.t('Programm nach oben'),downLabel:this.t('Programm nach unten')}).replaceAll('<button ','<button data-op="move-program" ').replaceAll('data-program=', 'data-id=').replace('data-direction="up"','data-delta="-1"').replace('data-direction="down"','data-delta="1"')}${this.toggle(p.enabled,'Programm '+p.name+' aktivieren',`data-toggle="${lmEsc(p.id)}"`)}${this.btn('copy-program',this.icon('copy'),`data-id="${lmEsc(p.id)}" title="Programm kopieren" aria-label="Programm kopieren"`,'icon')}${this.editBtn('programs',p.id)}</div></div>
+      <div class="toolbar list-tools">${programOrderButtons({programId:p.id,index,count:items.length,action:'legacy',disabled:this.busy,upLabel:this.t('Programm nach oben'),downLabel:this.t('Programm nach unten')}).replaceAll('<button ','<button data-op="move-program" ').replaceAll('data-program=', 'data-id=').replace('data-direction="up"','data-delta="-1"').replace('data-direction="down"','data-delta="1"')}${this.toggle(p.enabled,'Programm '+p.name+' aktivieren',`data-toggle="${lmEsc(p.id)}"`)}${this.btn('copy-program',this.icon('copy'),`data-id="${lmEsc(p.id)}" title="Programm kopieren" aria-label="Programm kopieren"`,'icon')}${this.editBtn('programs',p.id)}</div></div>
       ${this.expanded.has(p.id)?`<div class="actions">${p.actions.map(a=>`<div class="action ${a.enabled?'':'disabled'}"><div class="action-info"><strong>${this.user(a.name?.trim()||this.targetNames(a))}</strong><span>${lmEsc(this.when(a,p.kind))}</span><small>${lmEsc(this.actionText(a))}</small></div>${this.toggle(a.enabled,'Aktion '+this.targetNames(a)+' aktivieren',`data-action-toggle="${lmEsc(a.id)}" data-program="${lmEsc(p.id)}"`)}</div>`).join('')}</div>`:''}</section>`).join('');
       return programGroup({id:'lm-program-group-'+key,title:this.t(label),count:items.length,content,expanded:open}).replace('data-ui="collapse"',`data-ui="collapse" data-program-group="${key}"`);
     }).join('')}`;

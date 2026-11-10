@@ -72,6 +72,11 @@ const server=http.createServer((req,res)=>{
   assert.equal(await nav('settings').evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator('.list-tools');
+  if(width<600){
+   const layout=await page.locator('.program-head').first().evaluate(e=>{const title=e.querySelector('.program-title').getBoundingClientRect(),tags=e.querySelector('.tags').getBoundingClientRect();return {titleWidth:title.width,tagsTop:tags.top,titleBottom:title.bottom};});
+   assert.ok(layout.titleWidth>150,'Program name retains mobile width');
+   assert.ok(layout.tagsTop>=layout.titleBottom,'Weekdays appear below program name');
+  }
   if(width<600){assert.equal(await controls.locator('[data-op="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),false);}
   assert.equal(await page.locator('[data-op="filter-vacation"]').count(),0);
   assert.equal(await page.locator('.program-title').count(),3);
