@@ -1,5 +1,6 @@
-/* Light Manager 1.1.6 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.1.6';
+import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, navigation, section as uiSection, row as uiRow, toggle as uiToggle, filterButton, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI} from './family-ui/1.0.0/family-ui.js';
+/* Light Manager 1.2.0 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.2.0';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -12,58 +13,192 @@ Object.assign(LM_EN,{"Hue-Szenen": "Hue scenes", "Hue-Szene": "Hue scene", "Bitt
 const LM_DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const lmAction = () => ({id:lmId(),enabled:true,mode:'on',targets:[],brightness:100,kelvin:null,rgb:null,
   event:'fixed',time:'18:00',offset:0,earliest:'00:00',latest:'23:59',sensors:[],delay:120,lux_entity:'',lux_on:80,lux_off:150,on_delay:120,end_action:'restore',lux_end:'above',skips:[]});
-const LM_STYLE = `
-.settings-sensor-value{margin-inline-start:8px}
+const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
 .tags>div{display:flex;flex-wrap:wrap;gap:2px 10px}
 .time-heading{justify-content:space-between}
-.program-group+.program-group{margin-top:16px}.program-group-head{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px 9px 0;text-align:left;color:inherit}.program-group-head strong{font-size:16px}.program-group-head small{margin-left:auto}
-:host{display:block;color:var(--primary-text-color,#212121);font-family:var(--ha-font-family-body,Roboto,Arial,sans-serif);font-size:14px;--lm-accent:var(--primary-color,#03a9f4);--lm-muted:var(--secondary-text-color,#727272);--lm-line:var(--divider-color,#e0e0e0);--lm-bg:var(--ha-card-background,var(--card-background-color,#fff))}
-*{box-sizing:border-box}ha-card{display:block;background:var(--lm-bg);border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--lm-line));border-radius:var(--ha-card-border-radius,12px);box-shadow:var(--ha-card-box-shadow,none);overflow:hidden}
-h2,h3,h4,p{margin:0}h2,h3{font-size:16px;font-weight:500}small,.muted{font-size:12px;color:var(--lm-muted);line-height:1.5}
-button,input,select{font:inherit}button{color:var(--lm-accent);border:0;background:transparent;border-radius:var(--ha-button-border-radius,20px);padding:9px 14px;cursor:pointer;line-height:1.35;font-weight:500}button:hover{background:color-mix(in srgb,var(--lm-accent) 8%,transparent)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--lm-accent);outline-offset:2px}button:disabled{opacity:.45;cursor:default}button.primary{background:var(--lm-accent);color:var(--text-primary-color,#fff)}button.danger{color:var(--error-color,#db4437)}button.icon{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:8px}.icon svg{width:20px;height:20px;fill:currentColor}
-.card-top{display:flex;align-items:stretch;border-bottom:1px solid var(--lm-line);min-height:52px}.tabs{display:flex;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;padding:0 8px}.tabs::-webkit-scrollbar{display:none}.tabs button{flex-shrink:0;border-radius:0;border-bottom:2px solid transparent;color:var(--lm-muted);padding:16px 14px;white-space:nowrap;font-size:14px}.tabs button.active{border-bottom-color:var(--lm-accent);color:var(--lm-accent)}button.settings-button{width:48px;min-width:48px;flex-shrink:0;display:grid;place-items:center;padding:12px;border-radius:0;color:var(--lm-muted)}.settings-button.active{color:var(--lm-accent);background:color-mix(in srgb,var(--lm-accent) 8%,transparent)}.settings-button svg{width:24px;height:24px;fill:currentColor}
-.content{padding:8px 16px 16px}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.page-actions{display:flex;justify-content:flex-end;padding:4px 0}.page-actions button{font-size:13px}.vacation-filter{margin-right:auto;border:1px solid var(--lm-line);padding:6px 12px;align-self:center}.vacation-filter[aria-pressed="true"]{background:var(--lm-accent);color:var(--text-primary-color,#fff);border-color:var(--lm-accent)}.list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}.row{padding:16px 0;border-bottom:1px solid var(--lm-line);display:flex;align-items:center;gap:16px}.row:last-child{border-bottom:0}.row .main{flex:1;min-width:0;overflow-wrap:anywhere}.row strong{font-size:14px;font-weight:500}.row p{margin-top:5px;font-size:13px;line-height:1.5}.row p small{overflow-wrap:anywhere}.tag{display:inline-flex;font-size:12px;color:var(--lm-muted);margin:0 10px 0 0}.tag.on{color:var(--lm-accent)}.empty{padding:24px 0;color:var(--lm-muted);line-height:1.6}.empty strong{display:block;font-weight:400}.alert{margin:8px 0;padding:10px 12px;border-radius:4px;background:color-mix(in srgb,var(--warning-color,#ffb300) 10%,transparent);color:var(--primary-text-color,#212121);font-size:13px;line-height:1.5}.alert.error{background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent);color:var(--error-color,#db4437)}
-.program{padding:10px 0 6px;border-bottom:1px solid var(--lm-line)}.program:last-child{border-bottom:0}.program-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.program-heading{flex:1;min-width:0}.program-title{display:flex;align-items:center;gap:8px;padding:0;color:var(--primary-text-color,#212121);font-size:14px;text-align:left}.program-title span{overflow-wrap:anywhere}.chevron{width:20px;height:20px;flex-shrink:0;transform:rotate(-90deg);transition:transform .15s}.chevron.expanded{transform:rotate(0)}.chevron path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.tags{display:grid;gap:4px;margin:6px 0 0 28px;font-size:12px;color:var(--lm-muted)}.program.disabled>.program-head,.action.disabled>.action-info{opacity:.55}.action{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0;margin-left:28px;border-top:1px solid var(--lm-line)}.program-head+.actions{margin-top:7px}.action-info{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.action-info strong{font-size:14px;font-weight:500}.action-info>span{font-size:13px}.summary{font-size:13px;line-height:1.5}
-.toggle{display:inline-flex;align-items:center;gap:9px;position:relative;min-height:40px;cursor:pointer;font-size:12px;white-space:nowrap}.toggle input{position:absolute;opacity:0;width:36px;height:36px;margin:0;cursor:pointer}.switch-track{pointer-events:none;display:inline-flex;align-items:center;width:36px;height:20px;border-radius:12px;background:var(--switch-unchecked-track-color,#9e9e9e);padding:2px;flex-shrink:0}.switch-thumb{display:block;width:16px;height:16px;border-radius:50%;background:var(--switch-unchecked-button-color,#fff);box-shadow:0 1px 3px #0003;transition:transform .15s}.toggle input:checked+.switch-track{background:color-mix(in srgb,var(--lm-accent) 50%,transparent)}.toggle input:checked+.switch-track .switch-thumb{transform:translateX(16px);background:var(--lm-accent)}.toggle input:focus-visible+.switch-track{outline:2px solid var(--lm-accent);outline-offset:3px}.switch{display:flex;align-items:center;gap:8px;min-height:32px;font-size:13px}.switch input{margin:0}
-.overview-panel{border-bottom:1px solid var(--lm-line)}.overview-toggle{display:flex;align-items:center;gap:6px;padding:10px 16px;color:var(--lm-muted);font-size:12px;border-radius:0}.overview{padding:0 16px 14px}.overview[hidden]{display:none}.sun-row{display:flex;align-items:center;gap:28px;padding:4px 0 12px}.sun-value{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-variant-numeric:tabular-nums}.status-icon{width:21px;height:21px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.sun-value .status-icon{color:var(--primary-color,#03a9f4)}.overview-group+.overview-group{margin-top:14px}.overview-group h4{font-size:11px;font-weight:500;color:var(--lm-muted);margin:0 0 8px}.sensor-grid{display:flex;flex-wrap:wrap;align-items:center;gap:9px 24px}.sensor-value{display:inline-flex;flex:0 1 auto;max-width:100%;align-items:center;justify-content:flex-start;gap:8px;min-width:0;font-size:13px;line-height:1.5}.sensor-label{min-width:0;overflow-wrap:anywhere}.sensor-state{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-variant-numeric:tabular-nums}.sensor-state .status-icon{width:18px;height:18px;color:var(--lm-muted)}.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.settings-group{padding:16px 0;border-bottom:1px solid var(--lm-line)}.settings-group:last-child{border-bottom:0}.settings-row{display:flex;align-items:center;justify-content:space-between;gap:16px}.settings-row h3{font-size:16px;font-weight:500}.settings-row>.primary{font-size:13px}.settings-group .row strong{font-size:15px}.backup-actions{margin-top:12px}.version-info{font-size:12px;color:var(--lm-muted);margin-top:16px}.divider{border:0;border-top:1px solid var(--lm-line);margin:20px 0}.planned-row{padding:12px 0}.planned-row strong{font-size:13px}.planned-row.skipped strong{text-decoration:line-through}.planned-row.skipped .main{opacity:.6}.planned-time{white-space:nowrap}.history{margin-top:12px}.history p{font-size:12px;line-height:1.5;margin:8px 0}
-.shade{position:fixed;inset:0;background:#0006;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px}.modal{display:flex;flex-direction:column;width:800px;max-width:100%;max-height:90dvh;background:var(--lm-bg);color:var(--primary-text-color,#212121);border-radius:var(--ha-dialog-border-radius,12px);box-shadow:0 8px 32px #0004}.modal-head,.modal-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 24px;flex-shrink:0}.modal-head{border-bottom:1px solid var(--lm-line)}.modal-head h2{font-size:20px;font-weight:400}.modal-head button{font-size:22px;padding:4px 10px;color:var(--lm-muted)}.form{padding:20px 24px;overflow-y:auto;overscroll-behavior:contain;min-height:0}.modal-foot{border-top:1px solid var(--lm-line);justify-content:flex-end;flex-wrap:wrap}.modal-foot .alert{flex-basis:100%;margin:0}.schedule-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}@media(max-width:600px){.schedule-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px}.field>span{color:var(--lm-muted)}.field small{font-size:12px;font-weight:400}.wide{grid-column:1/-1}input:not([type=checkbox]),select{width:100%;min-width:0;border:1px solid var(--lm-line);border-radius:4px;padding:11px 10px;color:var(--primary-text-color,#212121);background:var(--input-fill-color,var(--secondary-background-color,#f5f5f5))}input[type=color]{padding:4px;min-height:42px}input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:var(--lm-accent)}.choices{display:flex;flex-wrap:wrap;gap:9px 14px;max-height:180px;overflow:auto;padding:8px 0}.choices label{display:flex;align-items:center;gap:7px;font-size:13px;min-height:28px;max-width:100%;overflow-wrap:anywhere}.choices label input{margin:0}.choices.stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.days-field>span{font-size:14px;font-weight:500;color:var(--primary-text-color,#212121)}.choices.days{gap:6px}.days label{position:relative;cursor:pointer;min-height:0}.days input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.days span{pointer-events:none;display:block;padding:8px 11px;border:1px solid var(--lm-line);border-radius:16px;font-size:12px}.days input:checked+span{color:var(--lm-accent);background:color-mix(in srgb,var(--lm-accent) 12%,transparent);border-color:transparent}.days input:focus-visible+span{outline:2px solid var(--lm-accent)}
-.editor-action{border:1px solid var(--lm-line);border-radius:8px;padding:16px;margin:12px 0;background:transparent}.editor-action-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.action-fold{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:4px 0;text-align:left;color:var(--primary-text-color,#212121);border-radius:4px}.action-fold-text{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}.action-fold-text strong{font-size:14px;font-weight:500}.action-fold-text small{font-weight:400}.editor-action-body{margin-top:16px;padding-top:16px;border-top:1px solid var(--lm-line)}.editor-action .list-tools{gap:0}.technical-id{font-family:monospace;overflow-wrap:anywhere}.lamp-selection{max-height:55dvh;grid-template-columns:1fr!important}.lamp-selection [hidden]{display:none}.season-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:420px;margin-top:12px}.actions-heading{font-size:14px;font-weight:500;margin:8px 0 12px}.advanced summary{cursor:pointer;color:var(--lm-muted);font-size:12px;margin-top:12px}.advanced>.fields{margin-top:12px}.brightness-row{display:flex;align-items:center;gap:16px}.brightness-row input[type=range]{flex:1;padding:0;accent-color:var(--lm-accent)}.brightness-row output{min-width:48px;font-size:13px;font-variant-numeric:tabular-nums;text-align:right}.brightness-control input[disabled]{opacity:.45}.white-labels{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}.white-labels output{font-variant-numeric:tabular-nums}.white-control input[type=range]{padding:0;appearance:none;height:10px;margin:10px 0;background:linear-gradient(to right,#b8d7ff,#fff4db,#ffbd6b);border:1px solid var(--lm-line);border-radius:12px;cursor:pointer}.white-control input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;border-radius:50%;background:var(--lm-bg);border:2px solid var(--lm-accent)}.white-control input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--lm-bg);border:2px solid var(--lm-accent)}.language-picker{display:flex;gap:8px}.language-picker button{border:1px solid var(--lm-line);color:var(--primary-text-color,#212121)}.language-picker button[aria-pressed=true]{border-color:var(--lm-accent);color:var(--lm-accent);background:color-mix(in srgb,var(--lm-accent) 12%,transparent)}.guide{font-size:14px;line-height:1.65;padding:10px 0}.guide h3{font-size:15px;margin-top:20px}.guide p{margin:8px 0}.guide pre{background:var(--secondary-background-color,#f5f5f5);padding:12px;border-radius:4px;white-space:pre-wrap}
-@media(max-width:600px){.card-top{min-height:48px}.tabs{padding:0 4px}.tabs button{padding:14px 8px;font-size:13px}button.settings-button{width:42px;min-width:42px;padding:9px}.content{padding:4px 12px 12px}.program-head{align-items:center;gap:8px}.program-title{font-size:14px}.program-group-head strong{font-size:15px}.row{gap:10px}.row .list-tools{gap:0}.action{gap:10px}.settings-row{gap:8px}.settings-row .toggle{flex-shrink:0}.settings-group>.row{align-items:flex-start}.shade{padding:8px}.modal{max-height:96dvh}.modal-head,.modal-foot{padding:12px 16px}.modal-head h2{font-size:18px}.form{padding:16px}.fields{grid-template-columns:minmax(0,1fr)}.wide{grid-column:auto}.choices.stack{grid-template-columns:1fr}.editor-action{padding:12px}.editor-action-head{align-items:flex-start;flex-wrap:wrap;gap:8px}.action-fold{flex-basis:100%}.editor-action-head>.list-tools{margin-left:28px;justify-content:flex-end;flex:1}.days{gap:5px}.days span{padding:8px 10px}.planned-row>button{padding:7px 9px;max-width:100px}}
-.entity-label{display:flex;flex-direction:column;gap:4px;min-width:0}.entity-label strong{font-size:14px;font-weight:500}.entity-label small{font-size:12px;color:var(--lm-muted)}.lamp-selection label{padding:7px 0}.target-choices{border:1px solid var(--lm-line);border-radius:6px;overflow:hidden}.target-choices details+details{border-top:1px solid var(--lm-line)}.target-choices summary{padding:12px;cursor:pointer;font-size:14px;font-weight:500}.target-choices summary small{float:right;font-size:12px;color:var(--lm-muted);font-weight:400}.target-choices .field{padding:0 12px 8px}.colour-control{align-items:center;padding:8px 16px 16px;gap:16px}.colour-control>span{align-self:flex-start}.colour-wheel{width:min(100%,340px);aspect-ratio:1;border-radius:50%;position:relative;touch-action:none;cursor:crosshair;background:radial-gradient(circle closest-side,#fff 0%,#ffffff00 100%),conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);flex-shrink:0}.colour-wheel:focus-visible{outline:3px solid var(--lm-accent);outline-offset:5px}.colour-marker{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px #0009,0 0 0 1px #0004;pointer-events:none}.colour-preview{display:flex;align-items:center;gap:10px;font-size:13px;font-family:monospace}.colour-preview>span{width:24px;height:24px;border-radius:50%;border:1px solid var(--lm-line)}
-.settings-fold{display:flex;align-items:center;gap:6px;padding:0;color:var(--primary-text-color,#212121);font-size:16px;font-weight:500;text-align:left}.choices.lamp-selection{grid-auto-rows:max-content;align-content:start;gap:0;max-height:min(55dvh,520px);overflow-y:auto;overflow-x:hidden;padding:0 4px}.choices.lamp-selection>label{align-items:flex-start;min-height:0;padding:12px 0;border-bottom:1px solid var(--lm-line);line-height:1.45}.choices.lamp-selection>label:last-child{border-bottom:0}.choices.lamp-selection>label>input{margin:2px 0 0;flex:0 0 18px}.choices.lamp-selection .entity-label{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;flex:1;min-width:0}.choices.lamp-selection .entity-label strong,.choices.lamp-selection .entity-label small{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.45}.choices.lamp-selection .entity-label small{font-size:12px}.settings-group [hidden]{display:none}
-.member-fold{display:flex;align-items:center;gap:8px;padding:0;color:var(--primary-text-color,#212121);text-align:left;min-width:0;width:100%}.member-fold strong{flex:1;min-width:0;overflow-wrap:anywhere}.member-fold small{flex-shrink:0}.assignment-group{border-bottom:1px solid var(--lm-line)}.assignment-group:last-child{border-bottom:0}.assignment-group>.row{border:0}.assigned-lamps{padding:0 0 12px 28px;font-size:13px;line-height:1.5}.assigned-lamps>div{padding:4px 0;overflow-wrap:anywhere}.planned-heading{margin:10px 0 6px}.planned-heading h3{font-size:14px}.planned-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:9px 0}.planned-time{font-size:14px;font-variant-numeric:tabular-nums;line-height:1.4}.planned-cover{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.planned-target{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;min-width:0}.planned-cover strong{font-size:13px;font-weight:500}.planned-position{font-size:12px;color:var(--lm-muted);font-variant-numeric:tabular-nums}.planned-detail{font-size:12px;color:var(--lm-muted);line-height:1.4}.planned-action button{font-size:13px;padding:7px 10px;min-height:36px}.planned-action,.sensor-action{align-self:center}.sensor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:9px 0}.sensor-summary{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.sensor-summary strong{font-size:13px;font-weight:500}.sensor-summary small{font-size:12px;color:var(--lm-muted)}.sensor-paused .sensor-summary{opacity:.6}.plan-status{color:var(--lm-accent);font-size:12px}.edit-button{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:8px}.edit-button .status-icon{width:20px;height:20px}@media(max-width:600px){.planned-row{grid-template-columns:40px minmax(0,1fr) auto;gap:3px 8px}.planned-target{flex-direction:column;align-items:flex-start;gap:2px}.planned-time{font-size:13px}.planned-action button{padding:7px 9px;max-width:100px}.sensor-row{grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:8px}}
-.choices.stack{grid-auto-rows:max-content;align-content:start}
-.choices.scene-choices{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;gap:0;max-height:300px;overflow-y:auto;overflow-x:hidden;padding:0 4px}.choices.scene-choices>label{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.15fr);gap:10px;align-items:start;min-height:0;padding:8px 0;border-bottom:1px solid var(--lm-line);line-height:1.45}.choices.scene-choices>label:last-child{border-bottom:0}.choices.scene-choices>label>input{margin:2px 0 0;flex:0 0 18px}.scene-choices .entity-label{display:contents}.scene-choices .entity-label strong,.scene-choices .entity-label small{min-width:0}.scene-choices .entity-label strong{font-size:13px}.scene-choices .entity-label strong,.scene-choices .entity-label small{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
-
-.settings-group[data-settings]{padding:10px 0}.settings-group[data-settings] .settings-fold{font-size:14px}.settings-group[data-settings] .row{padding:4px 0;gap:8px;min-height:40px}.settings-group[data-settings] .row strong{font-size:13px;font-weight:500;line-height:1.35}.settings-group[data-settings] .list-tools{gap:0}.settings-group[data-settings] .assigned-lamps{padding:0 0 6px 28px;font-size:12px;line-height:1.35}.settings-group[data-settings] .assigned-lamps>div{padding:2px 0}.light-selection-divider{width:100%;border:0;border-top:2px solid var(--lm-line);margin:8px 0;grid-column:1/-1}.choices.lamp-assignment>label{padding:6px 0}.choices.lamp-assignment .entity-label strong{font-size:13px}
-.choices.lamp-table>label{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:start;padding:6px 0;min-height:32px}.choices.lamp-table .entity-label{display:contents}.choices.lamp-table .entity-label strong{font-size:13px;line-height:1.35}.choices.lamp-table .entity-label small{font-size:12px;line-height:1.35}.choices.lamp-table>label>input{margin:0}.choices.lamp-table>label[hidden]{display:none}.lamp-table .light-selection-divider{margin:5px 0}
-
-@media(max-width:600px){.planned-row[data-once-program] .planned-action{grid-column:2/-1;justify-self:end}}
-@media (max-width:600px){
-  .tabs{padding:0 4px}
-  .tabs button{flex:0 0 auto;white-space:nowrap;padding:14px 8px;font-size:13px}
-  button.settings-button{width:44px;min-width:44px}
-  button.icon,.modal-head button{min-width:44px;min-height:44px}
-  .program-head>.list-tools{display:grid;grid-template-columns:repeat(2,44px);gap:0;justify-items:center;flex-shrink:0}
-  .program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}
-  .program-head>.list-tools button.icon{padding:0}
-  .program-head .tags{margin-left:28px;overflow-wrap:anywhere}
-  .editor-action-head>.list-tools{margin-left:0;gap:4px}
-  .sensor-action button{max-width:130px;padding-inline:8px;white-space:normal}
-  .planned-action button,.sensor-action button,.time-heading button,.modal-foot button{min-height:44px}
-  .time-heading{gap:4px}
-  .shade{padding:0;align-items:flex-end}
-  .modal{width:100%;max-height:100dvh;border-radius:16px 16px 0 0}
-  .modal-head{padding-top:max(12px,env(safe-area-inset-top))}
-  .modal-foot{padding-bottom:max(12px,env(safe-area-inset-bottom))}
-  .form input:not([type=checkbox]):not([type=range]),.form select{font-size:16px}
-  .choices:not(.days) label{min-height:44px}
-  .target-choices summary{min-height:44px}
+.program-group+.program-group{margin-top:16px}
+.program-group-head{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px 9px 0;text-align:left;color:inherit}
+.program-group-head strong{font-size:16px}
+.muted{font-size:12px;color:var(--lm-muted);line-height:1.5}
+.icon svg{width:20px;height:20px;fill:currentColor}
+.content{padding:8px 16px 16px}
+.list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tag{display:inline-flex;font-size:12px;color:var(--lm-muted);margin:0 10px 0 0}
+.tag.on{color:var(--lm-accent)}
+.empty{padding:24px 0;color:var(--lm-muted);line-height:1.6}
+.empty strong{display:block;font-weight:400}
+.alert{margin:8px 0;padding:10px 12px;border-radius:4px;background:color-mix(in srgb,var(--warning-color,#ffb300) 10%,transparent);color:var(--primary-text-color,#212121);font-size:13px;line-height:1.5}
+.alert.error{background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent);color:var(--error-color,#db4437)}
+.program{padding:10px 0 6px;border-bottom:1px solid var(--lm-line)}
+.program:last-child{border-bottom:0}
+.program-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.program-heading{flex:1;min-width:0}
+.program-title{display:flex;align-items:center;gap:8px;padding:0;color:var(--primary-text-color,#212121);font-size:14px;text-align:left}
+.program-title span{overflow-wrap:anywhere}
+.tags{display:grid;gap:4px;margin:6px 0 0 28px;font-size:12px;color:var(--lm-muted)}
+.program.disabled>.program-head,.action.disabled>.action-info{opacity:.55}
+.action{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0;margin-left:28px;border-top:1px solid var(--lm-line)}
+.program-head+.actions{margin-top:7px}
+.action-info{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.action-info strong{font-size:14px;font-weight:500}
+.action-info>span{font-size:13px}
+.summary{font-size:13px;line-height:1.5}
+.switch{display:flex;align-items:center;gap:8px;min-height:32px;font-size:13px}
+.overview-panel{border-bottom:1px solid var(--lm-line)}
+.overview-toggle{display:flex;align-items:center;gap:6px;padding:10px 16px;color:var(--lm-muted);font-size:12px;border-radius:0}
+.overview{padding:0 16px 14px}
+.overview[hidden]{display:none}
+.sun-row{display:flex;align-items:center;gap:28px;padding:4px 0 12px}
+.sun-value{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-variant-numeric:tabular-nums}
+.overview-group+.overview-group{margin-top:14px}
+.sensor-grid{display:flex;flex-wrap:wrap;align-items:center;gap:9px 24px}
+.sensor-value{display:inline-flex;flex:0 1 auto;max-width:100%;align-items:center;justify-content:flex-start;gap:8px;min-width:0;font-size:13px;line-height:1.5}
+.sensor-label{min-width:0;overflow-wrap:anywhere}
+.sensor-state{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.backup-actions{margin-top:12px}
+.divider{border:0;border-top:1px solid var(--lm-line);margin:20px 0}
+.planned-row{padding:12px 0}
+.planned-row strong{font-size:13px}
+.planned-row.skipped strong{text-decoration:line-through}
+.planned-time{white-space:nowrap}
+.history{margin-top:12px}
+.schedule-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:600px){.schedule-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-
-.tabs button.icon-tab{display:grid;place-items:center;flex:0 0 48px;width:48px;min-width:48px;padding:10px}.tabs .icon-tab .status-icon{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.daily-history-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--lm-line);font-size:12px}.daily-history-row:last-child{border-bottom:0}.daily-command{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.daily-command strong{font-size:13px;font-weight:500}.command-result{display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;color:var(--success-color,#388e3c)}.command-result .status-icon{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.failed .command-result,.failure-reason{color:var(--error-color,#db4437)}
-@media(max-width:380px){.daily-history-row{gap:6px;grid-template-columns:36px minmax(0,1fr) auto}.command-result{font-size:10px}}
+.choices{display:flex;flex-wrap:wrap;gap:9px 14px;max-height:180px;overflow:auto;padding:8px 0}
+.choices label{display:flex;align-items:center;gap:7px;font-size:13px;min-height:28px;max-width:100%;overflow-wrap:anywhere}
+.choices.stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.days-field>span{font-size:14px;font-weight:500;color:var(--primary-text-color,#212121)}
+.choices.days{gap:6px}
+.days label{position:relative;cursor:pointer;min-height:0}
+.days span{pointer-events:none;display:block;padding:8px 11px;border:1px solid var(--lm-line);border-radius:16px;font-size:12px}
+.editor-action{border:1px solid var(--lm-line);border-radius:8px;padding:16px;margin:12px 0;background:transparent}
+.editor-action-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.action-fold{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:4px 0;text-align:left;color:var(--primary-text-color,#212121);border-radius:4px}
+.action-fold-text{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}
+.action-fold-text strong{font-size:14px;font-weight:500}
+.editor-action-body{margin-top:16px;padding-top:16px;border-top:1px solid var(--lm-line)}
+.editor-action .list-tools{gap:0}
+.technical-id{font-family:monospace;overflow-wrap:anywhere}
+.lamp-selection{max-height:55dvh;grid-template-columns:1fr!important}
+.lamp-selection [hidden]{display:none}
+.season-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:420px;margin-top:12px}
+.actions-heading{font-size:14px;font-weight:500;margin:8px 0 12px}
+.advanced summary{cursor:pointer;color:var(--lm-muted);font-size:12px;margin-top:12px}
+.brightness-row{display:flex;align-items:center;gap:16px}
+.brightness-row output{min-width:48px;font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
+.white-labels{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
+.white-labels output{font-variant-numeric:tabular-nums}
+.language-picker{display:flex;gap:8px}
+.guide{font-size:14px;line-height:1.65;padding:10px 0}
+.guide pre{background:var(--secondary-background-color,#f5f5f5);padding:12px;border-radius:4px;white-space:pre-wrap}
+@media(max-width:600px){.content{padding:4px 12px 12px}
+.program-head{align-items:center;gap:8px}
+.program-title{font-size:14px}
+.program-group-head strong{font-size:15px}
+.action{gap:10px}
+.choices.stack{grid-template-columns:1fr}
+.editor-action{padding:12px}
+.editor-action-head{align-items:flex-start;flex-wrap:wrap;gap:8px}
+.action-fold{flex-basis:100%}
+.editor-action-head>.list-tools{margin-left:28px;justify-content:flex-end;flex:1}
+.days{gap:5px}
+.days span{padding:8px 10px}
+}
+.entity-label{display:flex;flex-direction:column;gap:4px;min-width:0}
+.entity-label strong{font-size:14px;font-weight:500}
+.lamp-selection label{padding:7px 0}
+.target-choices{border:1px solid var(--lm-line);border-radius:6px;overflow:hidden}
+.target-choices details+details{border-top:1px solid var(--lm-line)}
+.target-choices summary{padding:12px;cursor:pointer;font-size:14px;font-weight:500}
+.colour-control{align-items:center;padding:8px 16px 16px;gap:16px}
+.colour-control>span{align-self:flex-start}
+.colour-wheel{width:min(100%,340px);aspect-ratio:1;border-radius:50%;position:relative;touch-action:none;cursor:crosshair;background:radial-gradient(circle closest-side,#fff 0%,#ffffff00 100%),conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);flex-shrink:0}
+.colour-wheel:focus-visible{outline:3px solid var(--lm-accent);outline-offset:5px}
+.colour-marker{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px #0009,0 0 0 1px #0004;pointer-events:none}
+.colour-preview{display:flex;align-items:center;gap:10px;font-size:13px;font-family:monospace}
+.colour-preview>span{width:24px;height:24px;border-radius:50%;border:1px solid var(--lm-line)}
+.choices.lamp-selection{grid-auto-rows:max-content;align-content:start;gap:0;max-height:min(55dvh,520px);overflow-y:auto;overflow-x:hidden;padding:0 4px}
+.choices.lamp-selection>label{align-items:flex-start;min-height:0;padding:12px 0;border-bottom:1px solid var(--lm-line);line-height:1.45}
+.choices.lamp-selection>label:last-child{border-bottom:0}
+.choices.lamp-selection .entity-label{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;flex:1;min-width:0}
+.choices.lamp-selection .entity-label strong{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
+.member-fold{display:flex;align-items:center;gap:8px;padding:0;color:var(--primary-text-color,#212121);text-align:left;min-width:0;width:100%}
+.member-fold strong{flex:1;min-width:0;overflow-wrap:anywhere}
+.assignment-group{border-bottom:1px solid var(--lm-line)}
+.assignment-group:last-child{border-bottom:0}
+.assigned-lamps{padding:0 0 12px 28px;font-size:13px;line-height:1.5}
+.assigned-lamps>div{padding:4px 0;overflow-wrap:anywhere}
+.planned-heading{margin:10px 0 6px}
+.planned-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:9px 0}
+.planned-time{font-size:14px;font-variant-numeric:tabular-nums;line-height:1.4}
+.planned-cover{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.planned-target{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;min-width:0}
+.planned-cover strong{font-size:13px;font-weight:500}
+.planned-position{font-size:12px;color:var(--lm-muted);font-variant-numeric:tabular-nums}
+.planned-detail{font-size:12px;color:var(--lm-muted);line-height:1.4}
+.planned-action,.sensor-action{align-self:center}
+.sensor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:9px 0}
+.sensor-summary{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.sensor-summary strong{font-size:13px;font-weight:500}
+.sensor-paused .sensor-summary{opacity:.6}
+.plan-status{color:var(--lm-accent);font-size:12px}
+.edit-button{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:8px}
+@media(max-width:600px){.planned-row{grid-template-columns:40px minmax(0,1fr) auto;gap:3px 8px}
+.planned-target{flex-direction:column;align-items:flex-start;gap:2px}
+.planned-time{font-size:13px}
+.sensor-row{grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:8px}
+}
+.choices.stack{grid-auto-rows:max-content;align-content:start}
+.choices.scene-choices{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;gap:0;max-height:300px;overflow-y:auto;overflow-x:hidden;padding:0 4px}
+.choices.scene-choices>label{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.15fr);gap:10px;align-items:start;min-height:0;padding:8px 0;border-bottom:1px solid var(--lm-line);line-height:1.45}
+.choices.scene-choices>label:last-child{border-bottom:0}
+.scene-choices .entity-label{display:contents}
+.scene-choices .entity-label strong{min-width:0}
+.scene-choices .entity-label strong{font-size:13px}
+.scene-choices .entity-label strong{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
+.light-selection-divider{width:100%;border:0;border-top:2px solid var(--lm-line);margin:8px 0;grid-column:1/-1}
+.choices.lamp-assignment>label{padding:6px 0}
+.choices.lamp-assignment .entity-label strong{font-size:13px}
+.choices.lamp-table>label{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:start;padding:6px 0;min-height:32px}
+.choices.lamp-table .entity-label{display:contents}
+.choices.lamp-table .entity-label strong{font-size:13px;line-height:1.35}
+.choices.lamp-table>label[hidden]{display:none}
+.lamp-table .light-selection-divider{margin:5px 0}
+@media(max-width:600px){.planned-row[data-once-program] .planned-action{grid-column:2/-1;justify-self:end}
+}
+@media (max-width:600px){.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,44px);gap:0;justify-items:center;flex-shrink:0}
+.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}
+.program-head .tags{margin-left:28px;overflow-wrap:anywhere}
+.editor-action-head>.list-tools{margin-left:0;gap:4px}
+.time-heading{gap:4px}
+.choices:not(.days) label{min-height:44px}
+.target-choices summary{min-height:44px}
+}
+.daily-history-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--lm-line);font-size:12px}
+.daily-history-row:last-child{border-bottom:0}
+.daily-command{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.daily-command strong{font-size:13px;font-weight:500}
+.command-result{display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;color:var(--success-color,#388e3c)}
+.failed .command-result,.failure-reason{color:var(--error-color,#db4437)}
+@media(max-width:380px){.daily-history-row{gap:6px;grid-template-columns:36px minmax(0,1fr) auto}
+.command-result{font-size:10px}
+}
+/* Lighting-specific arrangement; shared controls come from UI_CSS. */
+:host{--lm-accent:var(--primary-color,#03a9f4);--lm-muted:var(--secondary-text-color,#727272);--lm-line:var(--divider-color,#e0e0e0);--lm-bg:var(--ha-card-background,var(--card-background-color,#fff))}
+.list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.program-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.program-heading{flex:1;min-width:0}
+.program-title{display:flex;align-items:center;gap:8px;padding:0;text-align:left;color:var(--primary-text-color,#212121);font-size:14px}
+.program-group-head{display:flex;align-items:center;gap:8px;width:100%;padding-left:0;color:var(--primary-text-color,#212121);text-align:left}
+.program-group-head strong{font-size:16px}.program-group-head small{margin-left:auto}
+.content{padding:8px 16px 16px}.form{min-height:0;overscroll-behavior:contain}.full{min-width:0}
+.alert{padding:12px 16px;font-size:13px;color:var(--error-color,#db4437);background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent)}
+.toggle>span:last-child{display:none}.settings-heading-row h3{font-size:14px}
+.sun-value .ui-icon{color:var(--primary-color,#03a9f4)}.sensor-state .ui-icon{width:18px;height:18px}
+.dialog-host footer .error{flex-basis:100%}
+@media(max-width:600px){.content{padding:4px 12px 12px}.program-head{gap:8px}.program-head>.list-tools{display:grid;grid-template-columns:repeat(2,40px);gap:0;flex-shrink:0}.program-head>.list-tools [data-op="move-program"],.program-head>.list-tools [data-op="copy-program"]{display:none}.program-title{font-size:14px}.program-group-head strong{font-size:15px}.fields{grid-template-columns:minmax(0,1fr)}}
 `;
 
 class LightManagerCard extends HTMLElement {
@@ -108,8 +243,22 @@ class LightManagerCard extends HTMLElement {
   setConfig(config){this.cardConfig=config||{};}
   getCardSize(){return 6;}
   static getStubConfig(){return {type:'custom:light-manager-card'};}
-  connectedCallback(){this.timer=setInterval(()=>this.refresh(),5000);this.refresh();}
-  disconnectedCallback(){clearInterval(this.timer);}
+  connectedCallback(){
+    this.unbindUI ||= bindUI(this.shadowRoot,({action,data,checked,element})=>{
+      if(this.busy)return;
+      if(action==='navigate'){
+        const page=data.page==='help'?'guide':data.page;
+        this.resetFolds();this.tab=page;this.error='';this.render();
+      }
+      if(action==='legacy-toggle'){
+        const input=document.createElement('input');
+        for(const attr of element.attributes)input.setAttribute(attr.name,attr.value);
+        input.type='checkbox';input.checked=checked;
+        this.change({target:input});
+      }
+    });
+    this.timer=setInterval(()=>this.refresh(),5000);this.refresh();}
+  disconnectedCallback(){clearInterval(this.timer);this.unbindUI?.();this.unbindUI=null;}
   set hass(value){this._hass=value;if(!this.data&&!this.loading)this.refresh();}
   get config(){return this.data?.config;}
   get catalog(){return this.data?.catalog||[];}
@@ -160,9 +309,9 @@ class LightManagerCard extends HTMLElement {
     return groups.map(group=>{
       const id=lmEsc(group.id), open=this.memberListsOpen.has('lamp-area:'+group.id), index=sortable.indexOf(group);
       const move=(delta,label,arrow)=>this.btn('move-area',arrow,`data-id="${id}" data-delta="${delta}" title="${this.t(label)}" aria-label="${this.t(label)}"`,'icon');
-      return `<div class="assignment-group"><div class="row"><div class="main">${this.btn('fold-members',this.chevron(open)+`<strong>${this.user(group.name)}</strong>`,`data-section="lamp-area" data-id="${id}" aria-expanded="${open}"`,'member-fold')}</div>
+      return `<div class="assignment-group"><div class="setting-row"><div class="row-text">${this.btn('fold-members',this.chevron(open)+`<strong>${this.user(group.name)}</strong>`,`data-section="lamp-area" data-id="${id}" aria-expanded="${open}"`,'member-fold')}</div>
         <div class="list-tools">${index>0?move(-1,'Bereich nach oben','↑'):''}${index>=0&&index<sortable.length-1?move(1,'Bereich nach unten','↓'):''}</div></div>
-        <div class="assigned-lamps" ${open?'':'hidden'}>${group.lamps.map(lamp=>`<div class="row"><div class="main"><strong>${this.user(lamp.name)}</strong></div><div class="list-tools">${this.editBtn('lamps',lamp.id)}${this.removeBtn('lamps',lamp.id)}</div></div>`).join('')}</div></div>`;
+        <div class="assigned-lamps" ${open?'':'hidden'}>${group.lamps.map(lamp=>`<div class="setting-row"><div class="row-text"><strong>${this.user(lamp.name)}</strong></div><div class="list-tools">${this.editBtn('lamps',lamp.id)}${this.removeBtn('lamps',lamp.id)}</div></div>`).join('')}</div></div>`;
     }).join('')||'<p class="version-info">Keine Einträge.</p>';
   }
   targets(){return [...this.config.lamps,...(this.data.areas||[]),...this.config.zones,...this.config.rooms];}
@@ -178,49 +327,65 @@ class LightManagerCard extends HTMLElement {
     }
     if(kind==='lux')return this.language()==='en'?`Start ≤ ${a.lux_on} lx · End ${a.lux_end==='below'?'≤':'≥'} ${a.lux_off} lx / ${a.delay} s`:`Start ≤ ${a.lux_on} lx · Ende ${a.lux_end==='below'?'≤':'≥'} ${a.lux_off} lx / ${a.delay} s`;
     return kind==='contact'?'Mindestens ein Kontakt offen':'Mindestens ein Sensor meldet Bewegung';}
-  btn(op,label,extra='',cls=''){return `<button type="button" data-op="${op}" ${extra} class="${cls}" ${this.busy?'disabled':''}>${label}</button>`;}
-  icon(kind){
-    const strokes={
-      schedule:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
-      sensors:'<circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4m11.4-11.4a8 8 0 0 1 0 11.4M3.5 3.5a12 12 0 0 0 0 17m17-17a12 12 0 0 1 0 17"/>',
-      success:'<circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/>',
-      failure:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/>'
-    };
-    if(strokes[kind])return `<svg class="status-icon" data-icon="${kind}" viewBox="0 0 24 24" aria-hidden="true">${strokes[kind]}</svg>`;
-    if(kind==='sunrise'||kind==='sunset'){const paths={"sunrise": "<path d=\"M2 17h20M5 21h14M7 17a5 5 0 0 1 10 0M4 12l-2-2m18 2 2-2M12 9V2m-3 3 3-3 3 3\"/>", "sunset": "<path d=\"M2 17h20M5 21h14M7 17a5 5 0 0 1 10 0M4 12l-2-2m18 2 2-2M12 2v7m-3-3 3 3 3-3\"/>"};return `<svg class="status-icon" data-icon="${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;}const paths={
-    edit:'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
-    copy:'M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z',
-    delete:'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
-    help:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-3h2v-2h-2v2zm1-11a4 4 0 0 0-4 4h2a2 2 0 1 1 4 0c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5a4 4 0 0 0-4-4z',
-    settings:'M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.63l-1.92-3.32a.49.49 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.62-.94l-.36-2.54a.49.49 0 0 0-.49-.42h-3.84a.49.49 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.6.22L2.68 8.85a.49.49 0 0 0 .12.63l2.03 1.58a7.3 7.3 0 0 0 0 1.88L2.8 14.52a.49.49 0 0 0-.12.63l1.92 3.32c.12.22.38.31.6.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.24.42.49.42h3.84c.25 0 .45-.18.49-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.09.48 0 .6-.22l1.92-3.32a.49.49 0 0 0-.12-.63zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z',
-    sun:'M6.76 4.84 4.96 3.05 3.55 4.46l1.79 1.79 1.42-1.41zM1 11v2h3v-2H1zm10-10v3h2V1h-2zm9.45 3.46-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zM20 11v2h3v-2h-3zM12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm-1 14v3h2v-3h-2zM3.55 19.54l1.41 1.41 1.79-1.79-1.41-1.41-1.79 1.79zm13.7-.38 1.79 1.79 1.41-1.41-1.79-1.79-1.41 1.41z',
-    sunset:'M17.66 8 12 2.34 6.34 8 7.76 9.41 11 6.17V13h2V6.17l3.24 3.24L17.66 8zM3 18h18v2H3v-2zm-2-4h4v2H1v-2zm18 0h4v2h-4v-2zM7 16h10a5 5 0 0 0-10 0z'};
-    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[kind]||paths.sun}"></path></svg>`;}
-  chevron(expanded){return `<svg class="chevron ${expanded?'expanded':''}" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>`;}
-  toggle(checked,label,extra=''){return `<label class="toggle"><input type="checkbox" ${extra} ${checked?'checked':''} aria-label="${lmEsc(label)}"><span class="switch-track"><span class="switch-thumb"></span></span></label>`;}
+  btn(op,label,extra='',cls=''){
+    const symbols={'edit':'edit','delete':'trash','copy-program':'copy','copy-action':'copy','remove-action':'trash','cancel':'close'};
+    const symbol=op==='move-program'?(label==='↑'?'up':'down'):symbols[op];
+    let html;
+    if(cls.split(' ').includes('icon')&&symbol){
+      html=iconButton({icon:symbol,label:this.t(op==='cancel'?'Schließen':op==='edit'?'Bearbeiten':op.includes('copy')?'Kopieren':op==='move-program'?(label==='↑'?'Programm nach oben':'Programm nach unten'):'Löschen'),action:'legacy',disabled:this.busy,danger:cls.includes('danger')});
+    }else{
+      html=uiButton({label:'',action:'legacy',variant:cls.includes('primary')?'primary':cls.includes('danger')?'danger':'text',disabled:this.busy});
+      html=html.replace('<span></span>',label.startsWith('+')?uiIcon('add')+'<span>'+this.t(label.replace(/^\+\s*/,''))+'</span>':label);
+    }
+    return html.replace('<button ',`<button data-op="${op}" ${extra} `).replace('class="',`class="${cls} `);
+  }
+  icon(kind){return uiIcon(({delete:'trash',sun:'illuminance'})[kind]||kind);}
+  chevron(expanded){return uiIcon('chevron',{expanded});}
+  toggle(checked,label,extra=''){
+    return uiToggle({label,checked,action:'legacy-toggle',disabled:this.busy}).replace('<button ',`<button ${extra} `);
+  }
   editBtn(section,id){return this.btn('edit',this.icon('edit'),`data-section="${section}" data-id="${lmEsc(id)}" title="Bearbeiten" aria-label="Bearbeiten"`,'icon');}
   removeBtn(section,id){return this.btn('delete',this.icon('delete'),`data-section="${section}" data-id="${lmEsc(id)}" title="Löschen" aria-label="Löschen"`,'icon danger');}
   empty(title,body){return `<div class="empty"><strong>${title}</strong><span class="muted">${body}</span></div>`;}
   render(){const d=this.data,ed=this.editor,sameEditor=ed&&ed===this.renderedEditor;
+    const focused=this.shadowRoot.activeElement;
+    const focusState=sameEditor&&focused?.closest('dialog')?{path:focused.dataset.path,start:focused.selectionStart,end:focused.selectionEnd}:null;
+    if(ed&&!this.renderedEditor&&focused?.dataset.op)this.returnFocus={op:focused.dataset.op,id:focused.dataset.id,section:focused.dataset.section};
     const scroll=sameEditor?(this.shadowRoot.querySelector('.form')?.scrollTop||0):0;
-    const navScroll=this.shadowRoot.querySelector('.tabs')?.scrollLeft||0;
+    const navScroll=this.shadowRoot.querySelector('nav')?.scrollLeft||0;
     if(!this.shadowRoot.querySelector('ha-card'))this.shadowRoot.innerHTML='<style></style><ha-card></ha-card><div class="dialog-host"></div>';
-    this.shadowRoot.querySelector('style').textContent=LM_STYLE;
+    this.shadowRoot.querySelector('style').textContent=UI_CSS+'\n'+LM_STYLE;
     this.shadowRoot.querySelector('ha-card').innerHTML=`
-      <div class="card-top"><nav class="tabs" aria-label="Lichtsteuerung">${[['programs','Programme'],['time','Zeitprogramm'],['sensors','Sensorprogramme']].map(([k,v])=>this.btn('tab',k==='programs'?v:this.icon(k==='time'?'schedule':'sensors'),`title="${this.t(v)}" aria-label="${this.t(v)}" data-tab="${k}" aria-current="${this.tab===k?'page':'false'}"`,[(k==='programs'?'':'icon-tab'),(this.tab===k?'active':'')].join(' '))).join('')}</nav>
-      ${this.btn('guide',this.icon('help'),`title="Anleitung" aria-label="Anleitung" aria-current="${this.tab==='guide'?'page':'false'}"`,'settings-button '+(this.tab==='guide'?'active':''))}
-      ${this.btn('settings',this.icon('settings'),`title="Einstellungen" aria-label="Einstellungen" aria-current="${this.tab==='settings'||this.tab==='status'?'page':'false'}"`,'settings-button '+(['settings','status'].includes(this.tab)?'active':''))}</div>
+      ${navigation({label:this.t('Lichtsteuerung'),items:[{id:'programs',label:this.t('Programme')},{id:'time',label:this.t('Zeitprogramm'),icon:'schedule'},{id:'sensors',label:this.t('Sensorprogramme'),icon:'sensors'}],active:this.tab==='guide'?'help':this.tab==='status'?'settings':this.tab,helpLabel:this.t('Anleitung'),settingsLabel:this.t('Einstellungen')})}
       ${d&&['programs','sensors'].includes(this.tab)?this.overview():''}
       <div class="content">${this.error&&!ed?`<div class="alert error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}
       ${d&&d.version!==LM_VERSION?'<div class="alert error">Versionskonflikt. Home Assistant neu starten und Browser neu laden.</div>':''}
       ${!d?this.empty('Integration unter Geräte & Dienste hinzufügen.',''):
-        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?`<article class="guide"><p class="version-info">Light Manager · Oberfläche ${LM_VERSION} · Integration ${lmEsc(d.version)}</p>${this.guide()}</article>`:this.programPage())}</div>`;
+        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?`<article class="guide">${versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}${this.guide()}</article>`:this.programPage())}</div>`;
+    const previousDialog=this.shadowRoot.querySelector('dialog');
+    if(ed&&!previousDialog)this.dialogOpener=this.shadowRoot.activeElement;
+    previousDialog?.close();
     this.shadowRoot.querySelector('.dialog-host').innerHTML=ed?this.dialog():'';
-    this.shadowRoot.querySelector('.tabs').scrollLeft=navScroll;
+    const modal=this.shadowRoot.querySelector('dialog');
+    if(modal){
+      modal.addEventListener('cancel',event=>{event.preventDefault();if(!this.busy){this.editor=null;this.error='';this.render();}});
+      modal.addEventListener('close',()=>{if(this.editor===ed&&modal.isConnected){this.editor=null;this.error='';this.render();}});
+      modal.showModal();
+    }else if(this.returnFocus){
+      const f=this.returnFocus;
+      const button=[...this.shadowRoot.querySelectorAll('button[data-op]')].find(b=>b.dataset.op===f.op&&b.dataset.id===f.id&&b.dataset.section===f.section);
+      button?.focus({preventScroll:true});this.returnFocus=null;
+    }
+    this.shadowRoot.querySelector('nav').scrollLeft=navScroll;
     if(ed){const form=this.shadowRoot.querySelector('.form');if(form)form.scrollTop=scroll;
       if(!sameEditor)this.shadowRoot.querySelector('.form input,.form select')?.focus({preventScroll:true});
       requestAnimationFrame(()=>{if(this.editor===ed&&form?.isConnected)form.scrollTop=scroll;});}
     this.translateDom(this.shadowRoot);
+    if(focusState?.path){
+      const input=[...this.shadowRoot.querySelectorAll('[data-path]')].find(el=>el.dataset.path===focusState.path);
+      input?.focus({preventScroll:true});
+      if(input?.setSelectionRange&&focusState.start!=null)try{input.setSelectionRange(focusState.start,focusState.end);}catch{}
+    }
     this.renderedEditor=ed;
   }
   loadProgramFolds(){
@@ -240,7 +405,7 @@ class LightManagerCard extends HTMLElement {
   overviewVisible(){this.loadProgramFolds();return this.tab==='sensors'?this.sensorOverviewOpen:this.overviewOpen;}
   readingKind(e){if(this.config.programs.some(p=>p.kind==='contact'&&p.actions.some(a=>a.sensors?.includes(e))))return 'contact';if(this.config.programs.some(p=>p.kind==='motion'&&p.actions.some(a=>a.sensors?.includes(e))))return 'motion';const entry=this.catalog.find(s=>s.entity===e)||{attributes:this._hass.states[e]?.attributes||{}};return this.isLux(entry)?'lux':'other';}
   readingValue(e,kind){const st=this._hass.states[e],v=st?.state;if(!st||v==='unavailable')return this.t('Nicht verfügbar');if(v==='unknown')return this.t('Unbekannt');if(kind==='contact'){const value=this.contactValue(e);return this.t(value===null?'Unbekannt':value?'Offen':'Geschlossen');}if(kind==='motion')return this.t(v==='on'?'Bewegung':v==='off'?'Keine Bewegung':'Unbekannt');const n=Number(v),unit=st.attributes.unit_of_measurement||(kind==='lux'?'lx':'');if(v!==''&&Number.isFinite(n)){const value=kind==='lux'&&unit==='klx'?n*1000:n;return new Intl.NumberFormat(this.language()==='en'?'en-GB':'de-DE',{maximumFractionDigits:kind==='lux'?0:2}).format(value)+(unit?' '+(kind==='lux'?'lx':unit):'');}return v+(unit?' '+unit:'');}
-  readingIcon(kind){const paths={edit:'<path d="M4 16l12-12 4 4L8 20H4v-4M14 6l4 4"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/>',unlock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 7.5-2M12 15v2"/>',lux:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',motion:'<circle cx="12" cy="4" r="2"/><path d="m7 20 3-6-1-5 4 2 3 4m-6-1 4 6M3 5a11 11 0 0 0 0 10m18-10a11 11 0 0 1 0 10"/>',unknown:'<circle cx="12" cy="12" r="9"/><path d="M10 8a2 2 0 1 1 3 2c-1 .5-1 1-1 2m0 4h.01"/>'};return `<svg class="status-icon" data-icon="${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]||paths.unknown}</svg>`;}
+  readingIcon(kind){return uiIcon(({lux:'illuminance',motion:'sensors',other:'unknown'})[kind]||kind);}
   overviewContent(){const sensors=[...new Set(this.config.programs.flatMap(p=>p.actions.flatMap(a=>[...(a.sensors||[]),...(a.lux_entity?[a.lux_entity]:[])])))].sort((a,b)=>this.entityName(a).localeCompare(this.entityName(b)));
     return `${this.tab==='sensors'?'':`<div class="sun-row">${[['sunrise','Sonnenaufgang'],['sunset','Sonnenuntergang']].map(([event,label])=>`<span class="sun-value" title="${this.t(label)}" aria-label="${this.t(label)} ${this.time(this.data.sun[event])}">${this.icon(event)}<time>${this.time(this.data.sun[event])}</time></span>`).join('')}</div>`}${[['contact','Öffnungskontakte'],['motion','Bewegungsmelder'],['lux','Helligkeit'],['other','Weitere Sensoren']].map(([kind,label])=>{const entries=sensors.filter(e=>this.readingKind(e)===kind);return entries.length?`<section class="overview-group" aria-label="${this.t(label)}"><h4>${label}</h4><div class="sensor-grid">${entries.map(e=>{const text=this.readingValue(e,kind),value=kind==='contact'?this.contactValue(e):null,lock=value!==null;return `<div class="overview-item sensor-value"><span class="sensor-label">${this.user(this.entityName(e))}</span><span class="sensor-state" title="${lmEsc(text)}">${this.readingIcon(lock?(value?'unlock':'lock'):kind)}<span ${lock?'class="visually-hidden"':''}>${lmEsc(text)}</span></span></div>`;}).join('')}</div></section>`:'';}).join('')}`;
   }
@@ -251,7 +416,7 @@ class LightManagerCard extends HTMLElement {
       ['time','Zeitprogramme',programs.filter(p=>p.kind==='time')],
       ['sensor','Sensorprogramme',programs.filter(p=>p.kind!=='time')]
     ];
-    return `<div class="page-actions">${this.btn('filter-vacation',(this.language()==='en'?'Vacation':'Urlaub'),`aria-pressed="${!!this.vacationFilter}"`,'vacation-filter')}${this.btn('add','+ Programm','data-section="programs"','primary')}</div>
+    return `<div class="page-actions">${filterButton({label:this.language()==='en'?'Vacation':'Urlaub',action:'legacy',selected:!!this.vacationFilter}).replace('<button ','<button data-op="filter-vacation" ')}${this.btn('add','+ Programm','data-section="programs"','primary')}</div>
     ${!programs.length?this.empty(this.vacationFilter?(this.language()==='en'?'No vacation programs.':'Keine Programme für den Urlaub.'):'Noch keine Programme.',''):groups.filter(([, , items])=>items.length).map(([key,label,items])=>{
       const open=!this.collapsedProgramGroups?.has(key);
       return `<section class="program-group">${this.btn('fold-program-group',this.chevron(open)+`<strong>${this.t(label)}</strong><small>${items.length}</small>`,`data-group="${key}" aria-expanded="${open}"`,'program-group-head')}
@@ -282,7 +447,7 @@ class LightManagerCard extends HTMLElement {
       }).join(', '));
   }
   statusPage(){return `${this.warningList()}
-    ${Object.keys(this.data.status).length?Object.entries(this.data.status).sort(([a],[b])=>this.entityName(a).localeCompare(this.entityName(b))).map(([e,s])=>`<div class="row"><div class="main"><strong>${this.user(this.entityName(e))}</strong><p>${this.user(s.kind==='fallback'?this.t('Rückfallverhalten'):s.program)} · ${lmEsc(this.t(LM_KINDS[s.kind]||'Rückfallverhalten'))}</p></div><span class="tag on">${lmEsc(s.mode==='scene'?'Szene':s.mode==='on'?'Ein':'Aus')}</span></div>`).join(''):this.empty('Kein aktives Programm.','')}`;}
+    ${Object.keys(this.data.status).length?Object.entries(this.data.status).sort(([a],[b])=>this.entityName(a).localeCompare(this.entityName(b))).map(([e,s])=>`<div class="setting-row"><div class="row-text"><strong>${this.user(this.entityName(e))}</strong><p>${this.user(s.kind==='fallback'?this.t('Rückfallverhalten'):s.program)} · ${lmEsc(this.t(LM_KINDS[s.kind]||'Rückfallverhalten'))}</p></div><span class="tag on">${lmEsc(s.mode==='scene'?'Szene':s.mode==='on'?'Ein':'Aus')}</span></div>`).join(''):this.empty('Kein aktives Programm.','')}`;}
   dailyHistory(){
     const rows=[...(this.data.daily_history||[])].sort((a,b)=>a.time.localeCompare(b.time));
     if(!rows.length)return `<p class="version-info">${this.language()==='en'?'No switching commands executed today.':'Heute wurden noch keine Schaltungen ausgeführt.'}</p>`;
@@ -293,20 +458,28 @@ class LightManagerCard extends HTMLElement {
     }).join('')}</div>`;
   }
   settings(){const c=this.config;
-    const fold=(section,label)=>this.btn('fold-settings',this.chevron(this.settingsOpen.has(section))+`<span>${label}</span>`,`data-section="${section}" aria-expanded="${this.settingsOpen.has(section)}" aria-controls="settings-${section}"`,'settings-fold');
-    return `<section class="settings-group"><div class="settings-row"><h3>Sprache</h3><div class="language-picker">${this.btn('language','🇩🇪 DE',`data-language="de" aria-pressed="${this.language()==='de'}" title="Deutsch"`)}${this.btn('language','🇬🇧 EN',`data-language="en" aria-pressed="${this.language()==='en'}" title="Englisch"`)}</div></div></section>
-      <section class="settings-group"><div class="settings-row"><h3>Urlaubsmodus</h3>${this.toggle(c.vacation,'Urlaubsmodus','data-vacation')}</div></section>
-      <section class="settings-group" data-settings="lamps"><div class="settings-row">${fold('lamps','Lampen')}${this.btn('select-lamps','Lampen auswählen','','primary')}</div>
-      <div id="settings-lamps" ${this.settingsOpen.has('lamps')?'':'hidden'}>${this.lampSettings()}</div></section>
-      <section class="settings-group" data-settings="sensors"><div class="settings-row">${fold('sensors','Sensoren')}${this.btn('select-sensors','Sensoren auswählen','','primary')}</div><div id="settings-sensors" ${this.settingsOpen.has('sensors')?'':'hidden'}>${c.sensors.map(v=>`<div class="row"><div class="main"><strong>${this.user(this.entityName(v.entity))}</strong> <small class="settings-sensor-value">${lmEsc(this.readingValue(v.entity,this.readingKind(v.entity)))}</small></div><div class="list-tools">${this.editBtn('sensors',v.entity)}</div></div>`).join('')||'<p class="version-info">Keine Einträge.</p>'}</div></section>
-      <section class="settings-group" data-settings="status"><div class="settings-row">${fold('status','Lampenstatus')}</div><div id="settings-status" ${this.settingsOpen.has('status')?'':'hidden'}>${this.statusPage()}</div></section>
-      <section class="settings-group" data-settings="daily-history"><div class="settings-row">${fold('daily-history',this.language()==='en'?"Today's switching commands":'Heutige Schaltungen')}</div><div id="settings-daily-history" ${this.settingsOpen.has('daily-history')?'':'hidden'}>${this.dailyHistory()}</div></section>
-      <section class="settings-group"><h3>Sicherung</h3><div class="toolbar backup-actions">${this.btn('export','Sicherung erstellen')}${this.btn('import','Sicherung wiederherstellen')}</div><input type="file" id="lm-backup" accept="application/json,.json" hidden></section>
-      <p class="version-info">Oberfläche ${LM_VERSION} · Integration ${lmEsc(this.data.version)}</p>`;
+    const section=(id,title,content,trailing='')=>uiSection({id:'lm-settings-'+id,title,content,trailing,expanded:this.settingsOpen.has(id)}).replace('data-settings="lm-settings-','data-settings="');
+    return `<section class="settings-group"><div class="settings-heading-row"><h3>${this.t('Sprache')}</h3><div class="language-picker">${this.btn('language','DE',`data-language="de" aria-pressed="${this.language()==='de'}" title="Deutsch"`)}${this.btn('language','EN',`data-language="en" aria-pressed="${this.language()==='en'}" title="English"`)}</div></div></section>
+      <section class="settings-group"><div class="settings-heading-row"><h3>${this.t('Urlaubsmodus')}</h3>${this.toggle(c.vacation,this.t('Urlaubsmodus'),'data-vacation')}</div></section>
+      ${section('lamps',this.t('Lampen'),this.lampSettings(),this.btn('select-lamps',this.t('Lampen auswählen'),'','primary'))}
+      ${section('sensors',this.t('Sensoren'),c.sensors.map(v=>uiRow({title:this.entityName(v.entity),description:this.readingValue(v.entity,this.readingKind(v.entity)),trailing:this.editBtn('sensors',v.entity)}).replace('<strong>','<strong data-user-content>')).join('')||notice(this.t('Keine Einträge.')),this.btn('select-sensors',this.t('Sensoren auswählen'),'','primary'))}
+      ${section('status',this.t('Lampenstatus'),this.statusPage())}
+      ${section('daily-history',this.language()==='en'?"Today's switching commands":'Heutige Schaltungen',this.dailyHistory())}
+      <section class="settings-group"><h3>${this.t('Sicherung')}</h3><div class="toolbar backup-actions">${this.btn('export',this.t('Sicherung erstellen'))}${this.btn('import',this.t('Sicherung wiederherstellen'))}</div><input type="file" id="lm-backup" accept="application/json,.json" hidden></section>
+      ${versionInfo({frontend:LM_VERSION,backend:this.data.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}`;
   }
   value(path){return path.split('.').reduce((v,k)=>v?.[k],this.editor.value);}
-  field(label,path,type='text',opts={}){const v=this.value(path);return `<label class="field ${opts.wide?'wide':''}"><span>${label}</span><input data-path="${path}" type="${type}" value="${lmEsc(v??'')}" ${opts.min!=null?`min="${opts.min}"`:''} ${opts.max!=null?`max="${opts.max}"`:''} ${type==='number'?'step="any"':''} ${opts.placeholder?`placeholder="${lmEsc(opts.placeholder)}"`:''}>${opts.help?`<small>${opts.help}</small>`:''}</label>`;}
-  select(label,path,options,rerender=false){return `<label class="field"><span>${label}</span><select data-path="${path}" ${rerender?'data-redraw':''}>${options.map(([v,n])=>`<option ${v!==''&&(path==='entity'||path.endsWith('lux_entity')||path.endsWith('.scene'))?'data-user-content':''} value="${lmEsc(v)}" ${String(path.endsWith('.mode')&&this.value(path)==='scene'?'on':this.value(path))===String(v)?'selected':''}>${lmEsc(n)}</option>`).join('')}</select></label>`;}
+  field(label,path,type='text',opts={}){
+    const id='lm-field-'+path.replaceAll('.','-');
+    let html=uiField({id,label,value:this.value(path)??'',type});
+    html=html.replace('<input ',`<input data-path="${path}" ${opts.min!=null?'min="'+opts.min+'"':''} ${opts.max!=null?'max="'+opts.max+'"':''} ${type==='number'?'step="any"':''} ${opts.placeholder?'placeholder="'+lmEsc(opts.placeholder)+'"':''} `);
+    if(opts.wide)html=html.replace('class="field"','class="field full"');
+    return html.replace('</label>',(opts.help?'<small>'+opts.help+'</small>':'')+'</label>');
+  }
+  select(label,path,options,rerender=false){
+    const value=path.endsWith('.mode')&&this.value(path)==='scene'?'on':this.value(path);
+    return selectField({id:'lm-field-'+path.replaceAll('.','-'),label,value,options:options.map(([value,label])=>({value,label}))}).replaceAll('<option value=',(path==='entity'||path.endsWith('lux_entity')||path.endsWith('.scene'))?'<option data-user-content value=':'<option value=').replace('<select ',`<select data-path="${path}" ${rerender?'data-redraw':''} `);
+  }
   check(label,path){return `<label class="switch"><input type="checkbox" data-path="${path}" ${this.value(path)?'checked':''}><span>${label}</span></label>`;}
   choices(label,path,items){const values=this.value(path)||[],scenes=path==='scenes';return `<div class="field wide ${path==='days'?'days-field':''}"><span>${label}</span><div class="choices ${scenes?'scene-choices':path==='days'?'days':items.length>7?'stack':''}">${items.length?items.map(x=>`<label><input type="checkbox" data-array="${path}" value="${lmEsc(x.id)}" ${values.includes(x.id)?'checked':''}><span ${path==='days'?'':'data-user-content'} ${scenes?'class="entity-label"':''}>${scenes?`<strong>${lmEsc(x.name)}</strong><small class="technical-id">${lmEsc(x.id)}</small>`:lmEsc(x.label||x.name)}</span></label>`).join(''):'<small>Noch keine passenden Einträge vorhanden.</small>'}</div></div>`;}
   lightList(items,selected,attribute,technical=true){
@@ -333,10 +506,11 @@ class LightManagerCard extends HTMLElement {
       content+=this.field('Anzeigename','name','text',{wide:section!=='lamps'});
       if(section==='lamps'){content+=this.select('Wenn keine Regel mehr gilt','fallback',[['off','Ausschalten'],['keep','Zustand beibehalten'],['restore','Vorherigen Zustand wiederherstellen']]);content+=`<div class="field"><span>Bereich</span>${this.user(this.lampAreaName(v.entity))}</div>`;}
       if(section==='sensors'){const record=this.catalog.find(s=>s.entity===v.entity)||{attributes:{}};if((!this.isLux(record)&&!['motion','occupancy','presence'].includes(record.attributes.device_class))||v.open_states){const binary=v.entity.startsWith('binary_sensor.');ed.contactInputs??={open_states:(v.open_states||(binary?['on']:[])).join(', '),closed_states:(v.closed_states||(binary?['off']:[])).join(', ')};content+=`<div class="field wide"><span>Aktueller Zustand</span>${this.user(this._hass.states[v.entity]?.state||this.t('Nicht verfügbar'))}${Array.isArray(record.attributes.options)&&record.attributes.options.length?`<small><span>Mögliche Zustände</span>: ${this.user(record.attributes.options.join(', '))}</small>`:''}</div>`+[['open_states','Offen-Zustände'],['closed_states','Geschlossen-Zustände']].map(([key,label])=>`<label class="field"><span>${label}</span><input type="text" data-contact-states="${key}" value="${lmEsc(ed.contactInputs[key])}" autocomplete="off"><small>Mehrere Werte durch Komma trennen.</small></label>`).join('');}}
-      if(['rooms','zones'].includes(section))content+=`<div class="wide target-choices"><details data-lamp-section="assignment" ${ed.lampSections.assignment?'open':''}><summary>Lampen <small data-assignment-count>${ed.lampIds.length} / ${this.config.lamps.length}</small></summary><div class="field">${this.lightList(this.config.lamps,ed.lampIds,'data-assign-light',false)}</div></details></div>`;
+      if(['rooms','zones'].includes(section))content+=`<div class="full target-choices"><details data-lamp-section="assignment" ${ed.lampSections.assignment?'open':''}><summary>Lampen <small data-assignment-count>${ed.lampIds.length} / ${this.config.lamps.length}</small></summary><div class="field">${this.lightList(this.config.lamps,ed.lampIds,'data-assign-light',false)}</div></details></div>`;
       if(section==='programs')content=this.programEditor();
     }
-    return `<div class="shade"><section class="modal" role="dialog" aria-modal="true" aria-label="${picker?title:title+' bearbeiten'}"><div class="modal-head"><h2>${picker?title:title+' bearbeiten'}</h2>${this.btn('cancel','✕','aria-label="Schließen"','icon')}</div><div class="form"><div class="fields">${content}</div></div><div class="modal-foot">${this.error?`<div class="alert error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}${section==='programs'&&this.config.programs.some(p=>p.id===v.id)?this.removeBtn('programs',v.id):''}${this.btn('cancel','Abbrechen')}${this.btn('commit',this.busy?'Speichern …':'Speichern','','primary')}</div></section></div>`;
+    return uiDialog({id:'lm-editor',title:picker?this.t(title):this.t(title+' bearbeiten'),content:`<div class="grid">${content}</div>`,closeLabel:this.t('Schließen'),actions:`${this.error?notice(this.message(this.error),{error:true}):''}${section==='programs'&&this.config.programs.some(p=>p.id===v.id)?this.removeBtn('programs',v.id):''}${this.btn('cancel',this.t('Abbrechen'))}${this.btn('commit',this.busy?this.t('Speichern …'):this.t('Speichern'),'','primary')}`}).replace('class="modal-body"','class="modal-body form"');
+
   }
   initProgramTargets(){
     const p=this.editor.value, first=p.actions[0]?.targets||[];
@@ -344,7 +518,7 @@ class LightManagerCard extends HTMLElement {
     p.targets=this.editor.mixedProgramTargets?[]:[...(p.targets||first)];
   }
   programTargetPicker(p){
-    return `<div class="wide"><h3>Lampen und Bereiche für alle Schaltaktionen</h3>
+    return `<div class="full"><h3>Lampen und Bereiche für alle Schaltaktionen</h3>
       ${this.editor.mixedProgramTargets?`<div class="alert">${this.t('Dieses Programm hat bisher unterschiedliche Schaltziele. Bitte gemeinsame Ziele für alle Aktionen auswählen.')}</div>`:''}
       ${this.targetChoices({id:p.id,targets:p.targets},'targets')}</div>`;
   }
@@ -358,13 +532,13 @@ class LightManagerCard extends HTMLElement {
       if(range.valid)action.kelvin=Math.max(range.min,Math.min(range.max,action.kelvin));
     }
   }
-  programEditor(){const p=this.editor.value;if(p.once_date)return this.field('Name','name')+`<div class="field"><span>Einmalige Schaltung</span>${lmEsc(p.once_date)}</div>${this.programTargetPicker(p)}<div class="wide">${p.actions.map((a,i)=>this.actionEditor(a,i,'time')).join('')}</div>`;return this.field('Name','name')+this.select('Programmtyp','kind',Object.entries(LM_KINDS),true)+
+  programEditor(){const p=this.editor.value;if(p.once_date)return this.field('Name','name')+`<div class="field"><span>Einmalige Schaltung</span>${lmEsc(p.once_date)}</div>${this.programTargetPicker(p)}<div class="full">${p.actions.map((a,i)=>this.actionEditor(a,i,'time')).join('')}</div>`;return this.field('Name','name')+this.select('Programmtyp','kind',Object.entries(LM_KINDS),true)+
     this.check('Programm aktiv','enabled')+this.check('Im Urlaub aussetzen','pause_in_vacation')+
     this.choices('Wochentage','days',LM_DAYS.map((name,id)=>({id,name})))+
     (p.kind==='time'?'':this.field('Gültig ab','start','time')+this.field('Gültig bis','end','time',{help:'Gleiche Uhrzeit = ganztägig.'}))+
     this.programTargetPicker(p)+
-    `<div class="wide season-box"><label class="switch"><input type="checkbox" data-path="season_enabled" data-redraw ${p.season_enabled?'checked':''}><span>Saison einschränken</span></label>${p.season_enabled?`<div class="season-dates">${this.seasonField('Von','season_from')}${this.seasonField('Bis','season_to')}</div>`:''}</div>
-    <div class="wide"><div class="toolbar"><h3 class="actions-heading">Schaltaktionen</h3>${p.actions.length>1?this.btn('expand-actions','Alle aufklappen')+this.btn('collapse-actions','Alle zuklappen'):''}</div>${p.actions.map((a,i)=>this.actionEditor(a,i,p.kind)).join('')}${this.btn('add-action','+ Schaltaktion hinzufügen')}</div>`;
+    `<div class="full season-box"><label class="switch"><input type="checkbox" data-path="season_enabled" data-redraw ${p.season_enabled?'checked':''}><span>Saison einschränken</span></label>${p.season_enabled?`<div class="season-dates">${this.seasonField('Von','season_from')}${this.seasonField('Bis','season_to')}</div>`:''}</div>
+    <div class="full"><div class="toolbar"><h3 class="actions-heading">Schaltaktionen</h3>${p.actions.length>1?this.btn('expand-actions','Alle aufklappen')+this.btn('collapse-actions','Alle zuklappen'):''}</div>${p.actions.map((a,i)=>this.actionEditor(a,i,p.kind)).join('')}${this.btn('add-action','+ Schaltaktion hinzufügen')}</div>`;
   }
   seasonField(label,key){this.editor.seasonInputs??={};const stored=this.editor.value[key]||'',value=this.editor.seasonInputs[key]??(stored?stored.slice(3,5)+'.'+stored.slice(0,2):'');
     return `<label class="field"><span>${label}</span><input type="text" data-season="${key}" value="${lmEsc(value)}" placeholder="TT.MM." maxlength="5" inputmode="decimal" aria-label="${label} (TT.MM.)"></label>`;}
@@ -408,7 +582,7 @@ class LightManagerCard extends HTMLElement {
   colourMode(a){if(a.mode==='scene')return 'scene';return a.kelvin!=null?'white':a.rgb?'color':'last';}
   targetChoices(a,path){
     const groups=this.lampAreaGroups(a);
-    return `<div class="wide target-choices">${groups.map(group=>{
+    return `<div class="full target-choices">${groups.map(group=>{
       const key=a.id+':'+group.id;
       const items=group.id?[{id:group.id,name:group.lamps.length?this.t('Ganzer Bereich'):group.name},...group.lamps]:group.lamps;
       const chosen=items.filter(item=>a.targets.includes(item.id)).length;
@@ -441,7 +615,7 @@ class LightManagerCard extends HTMLElement {
       const color=this.colourMode(a);
       if(a.mode==='on')body+=this.brightnessControl(a,i);
       body+=`<label class="field"><span>Farbe</span><select data-colormode="${i}"><option value="last" ${color==='last'?'selected':''}>Letzte Einstellung</option><option value="white" ${color==='white'?'selected':''}>Weißtöne</option><option value="color" ${color==='color'?'selected':''}>Farbe</option>${this.availableScenes(a).length?`<optgroup label="Hue-Szenen">${this.availableScenes(a).map(s=>`<option data-user-content value="${lmEsc(s.id)}" ${a.scene===s.id&&a.mode==='scene'?'selected':''}>${lmEsc(s.name)}</option>`).join('')}</optgroup>`:''}</select></label>`;
-      if(a.mode==='scene'&&!this.availableScenes(a).some(s=>s.id===a.scene))body+='<small class="wide">Hue-Szene passt nicht zur Auswahl. Bitte neu wählen.</small>';
+      if(a.mode==='scene'&&!this.availableScenes(a).some(s=>s.id===a.scene))body+='<small class="full">Hue-Szene passt nicht zur Auswahl. Bitte neu wählen.</small>';
       if(color==='white')body+=this.whiteControl(a,i);
       if(color==='color')body+=this.colourWheel(a,i);
       body+='';
@@ -452,7 +626,7 @@ class LightManagerCard extends HTMLElement {
       const timeField = a.event === 'fixed'
         ? this.field('Uhrzeit', q+'time', 'time')
         : this.field('Versatz (Minuten)', q+'offset', 'number', {min:-720,max:720});
-      body += '<div class="wide schedule-fields">'
+      body += '<div class="full schedule-fields">'
         + this.select('Auslöser', q+'event', triggers, true)
         + timeField
         + this.field('Frühestens', q+'earliest', 'time')
@@ -462,7 +636,7 @@ class LightManagerCard extends HTMLElement {
       if(kind!=='lux'){
         const allowed=kind==='motion'?['motion','occupancy','presence']:['opening','door','window','garage_door'];
         body+=this.choices(kind==='motion'?'Bewegungs- / Präsenzsensoren':'Öffnungskontakte',q+'sensors',bins.filter(x=>x.entity.startsWith('sensor.')||!x.attributes.device_class||allowed.includes(x.attributes.device_class)||a.sensors.includes(x.entity)).map(x=>({id:x.entity,name:x.name})));
-        if(kind==='contact'&&a.sensors.some(e=>e.startsWith('sensor.')&&!available.find(s=>s.entity===e)?.open_states))body+='<small class="wide">Offen- und Geschlossen-Zustände zuerst in den Einstellungen festlegen.</small>';
+        if(kind==='contact'&&a.sensors.some(e=>e.startsWith('sensor.')&&!available.find(s=>s.entity===e)?.open_states))body+='<small class="full">Offen- und Geschlossen-Zustände zuerst in den Einstellungen festlegen.</small>';
         body+=this.field(kind==='motion'?'Nachlauf ohne Bewegung (Sekunden)':'Freigabe nach Schließen (Sekunden)',q+'delay','number',{min:0,max:86400});
       }
       if(kind==='lux'||kind==='motion'){
@@ -473,7 +647,7 @@ class LightManagerCard extends HTMLElement {
       body+=this.select('Bei Programmende',q+'end_action',[['restore','Ursprünglichen Zustand wiederherstellen'],['off','Ausschalten'],['keep','Zustand beibehalten'],['fallback','Lampeneinstellung verwenden']]);
     }
     const folded=this.editor.collapsed?.has(a.id);
-    return `<div class="editor-action"><div class="editor-action-head">${this.btn('fold-action',this.chevron(!folded)+`<span class="action-fold-text"><strong>${a.name?.trim()?this.user(a.name.trim()):this.t('Schaltaktion')+' '+(i+1)}</strong><small>${this.user(this.targetNames(a))} · ${lmEsc(this.actionText(a))}</small></span>`,`data-id="${lmEsc(a.id)}" aria-expanded="${!folded}"`,'action-fold')}<div class="list-tools">${this.toggle(a.enabled,'Schaltaktion '+(i+1)+' aktivieren',`data-path="${q}enabled"`)}${this.btn('copy-action',this.icon('copy'),`data-index="${i}" title="Aktion kopieren" aria-label="Aktion kopieren"`,'icon')}${this.btn('remove-action',this.icon('delete'),`data-index="${i}" title="Aktion entfernen" aria-label="Aktion entfernen"`,'icon danger')}</div></div>${folded?'':`<div class="editor-action-body fields">${body}</div>`}</div>`;
+    return `<div class="editor-action"><div class="editor-action-head">${this.btn('fold-action',this.chevron(!folded)+`<span class="action-fold-text"><strong>${a.name?.trim()?this.user(a.name.trim()):this.t('Schaltaktion')+' '+(i+1)}</strong><small>${this.user(this.targetNames(a))} · ${lmEsc(this.actionText(a))}</small></span>`,`data-id="${lmEsc(a.id)}" aria-expanded="${!folded}"`,'action-fold')}<div class="list-tools">${this.toggle(a.enabled,'Schaltaktion '+(i+1)+' aktivieren',`data-path="${q}enabled"`)}${this.btn('copy-action',this.icon('copy'),`data-index="${i}" title="Aktion kopieren" aria-label="Aktion kopieren"`,'icon')}${this.btn('remove-action',this.icon('delete'),`data-index="${i}" title="Aktion entfernen" aria-label="Aktion entfernen"`,'icon danger')}</div></div>${folded?'':`<div class="editor-action-body grid">${body}</div>`}</div>`;
   }
   guide(){
     if(this.language()==='en')return `
@@ -491,7 +665,7 @@ class LightManagerCard extends HTMLElement {
       <p>When switching on, set brightness and choose the last color setting, white temperature, a color or an eligible Hue scene. A Hue scene is offered when its entity ID matches the technical light name followed by an underscore for every selected light entity.</p>
       <p>Opening contacts have priority over motion, then illuminance, then time programs. Within the same sensor priority, the higher program wins. For time programs the latest due action takes precedence. At the same time, a one-time action takes precedence over a recurring one, then list order decides.</p>
       <h3>Readings and backups</h3>
-      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. The compact Programs tab and the clock and sensor icons use the same mobile arrangement as Shutter Manager. Light status can be expanded directly in Settings using its heading. Settings also contains backup and restore, vacation mode, and the DE/EN language selector.</p>`;
+      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. All controls use the locally bundled HA UI Kit 1.0.0. The compact Programs tab and the clock and sensor icons use the same mobile arrangement as Shutter Manager. Light status can be expanded directly in Settings using its heading. Settings also contains backup and restore, vacation mode, and the DE/EN language selector.</p>`;
     return `
       <h3>Einstellungen</h3>
       <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
@@ -508,7 +682,7 @@ class LightManagerCard extends HTMLElement {
       <p>Beim Einschalten kannst du Helligkeit und Farbe einstellen. Zur Wahl stehen die letzte Einstellung, Weißtöne, eine Farbe oder eine passende Hue-Szene. Eine Szene wird angeboten, wenn ihre Entitäts-ID für jede gewählte Lichtentität zum technischen Lampennamen mit anschließendem Unterstrich passt.</p>
       <p>Öffnungskontakte haben Vorrang vor Bewegung, dann folgen Helligkeit und Zeitprogramme. Bei gleichem Sensorvorrang gewinnt das weiter oben gespeicherte Programm. Bei Zeitprogrammen zählt die jüngste fällige Aktion. Bei gleicher Uhrzeit hat die Einmalaktion Vorrang vor der wiederkehrenden Aktion, danach entscheidet die Listenreihenfolge.</p>
       <h3>Messwerte und Sicherung</h3>
-      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Der kompakte Tab Programme und die Uhr- und Sensorsymbole sind mobil wie im Shutter Manager angeordnet. Lampenstatus lässt sich direkt in den Einstellungen über die Überschrift aufklappen. Dort findest du auch Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
+      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Alle Bedienelemente verwenden den lokal mitgelieferten HA UI Kit 1.0.0. Der kompakte Tab Programme und die Uhr- und Sensorsymbole sind mobil wie im Shutter Manager angeordnet. Lampenstatus lässt sich direkt in den Einstellungen über die Überschrift aufklappen. Dort findest du auch Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
   }
   setPath(path,value){const keys=path.split('.');let obj=this.editor.value;for(const k of keys.slice(0,-1))obj=obj[k];obj[keys.at(-1)]=value;}
   input(e){const t=e.target;if(this.editor&&t.dataset.contactStates){this.editor.contactInputs[t.dataset.contactStates]=t.value;return;}if(t.hasAttribute('data-lamp-search')){for(const list of this.shadowRoot.querySelectorAll('.lamp-selection'))this.filterLightRows(list);return;}if(this.editor&&t.dataset.season){this.editor.seasonInputs??={};this.editor.seasonInputs[t.dataset.season]=t.value;return;}if(this.editor&&t.hasAttribute('data-brightness')){const i=Number(t.dataset.brightness);this.editor.value.actions[i].brightness=Number(t.value);this.shadowRoot.querySelector(`[data-brightness-value="${i}"]`).textContent=t.value+' %';return;}if(this.editor&&t.hasAttribute('data-white')){const i=Number(t.dataset.white),a=this.editor.value.actions[i];a.kelvin=Number(t.dataset.maxKelvin)-Number(t.value);const out=this.shadowRoot.querySelector(`[data-white-value="${i}"]`);if(out)out.textContent=a.kelvin+' K';return;}if(!this.editor||!t.dataset.path||t.type==='checkbox'||t.tagName==='SELECT')return;
@@ -553,7 +727,11 @@ class LightManagerCard extends HTMLElement {
     if(section==='lamps')this.applyScenePrefix(value);
     this.editor={section,value,revision:this.data.revision,collapsed:new Set((value.actions||[]).map(a=>a.id)),lampSections:{},lampIds:['rooms','zones'].includes(section)?this.config.lamps.filter(l=>l[section].includes(value.id)).map(l=>l.id):[]};if(section==='programs')this.initProgramTargets();this.render();}
   resetFolds(){this.settingsOpen.clear();this.memberListsOpen.clear();}
-  async click(e){const b=e.target.closest('button[data-op]');if(!b||this.busy)return;const op=b.dataset.op;
+  async click(e){
+    const fold=e.target.closest('[data-ui="collapse"]');
+    if(fold){const id=fold.closest('[data-settings]').dataset.settings;
+      fold.getAttribute('aria-expanded')==='true'?this.settingsOpen.delete(id):this.settingsOpen.add(id);return;}
+    const b=e.target.closest('button[data-op]');if(!b||this.busy)return;const op=b.dataset.op;
     if(op==='language'){this._language=b.dataset.language;try{localStorage.setItem(this.languageKey,this._language);}catch{}this.render();}
     else if(op==='filter-vacation'){this.vacationFilter=!this.vacationFilter;this.render();}
     else if(op==='tab'){this.resetFolds();this.tab=b.dataset.tab;this.error='';this.render();}

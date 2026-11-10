@@ -22,6 +22,17 @@ jobs:
       - run: python -m pip install -r tests/requirements.txt
       - run: python -m unittest discover -s tests -q
       - run: node --check custom_components/light_manager/frontend/light-manager-card.js
+      - run: npm install --prefix .ci playwright@1.62.1
+      - run: npx --prefix .ci playwright install --with-deps chromium
+      - name: Desktop and mobile UI Kit regression checks
+        env:
+          NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+        run: node tests/ui-kit.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: light-manager-ui-kit-screenshots
+          path: ../kit-qa-*.png
       - name: Verify release identity
         run: python scripts/check_release.py
 

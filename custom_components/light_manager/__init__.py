@@ -28,7 +28,7 @@ from homeassistant.helpers.sun import get_astral_event_date
 from .engine import Engine, validate, restrict_scene_config, scene_matches
 
 DOMAIN = 'light_manager'
-VERSION = '1.1.6'
+VERSION = '1.2.0'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,8 +39,8 @@ def utcnow():
 
 async def async_setup(hass, config):
     await hass.http.async_register_static_paths([StaticPathConfig(
-        '/light-manager/light-manager-card.js',
-        str(Path(__file__).parent / 'frontend' / 'light-manager-card.js'), False)])
+        '/light-manager',
+        str(Path(__file__).parent / 'frontend'), False)])
     frontend.add_extra_js_url(hass, '/light-manager/light-manager-card.js?v=' + VERSION)
     for command in (ws_get, ws_save):
         websocket_api.async_register_command(hass, command)

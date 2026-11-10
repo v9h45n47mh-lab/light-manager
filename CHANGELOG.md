@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- Migrate navigation, icons, controls, settings sections, forms and native dialogs to the locally bundled HA UI Kit 1.0.0.
+- Serve the complete frontend directory for local module imports.
+
 ## 1.1.6
 
 - Add a Vacation filter beside + Program to show programs that are not paused during vacation.
