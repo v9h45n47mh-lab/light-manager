@@ -11,6 +11,7 @@ Object.assign(LM_EN,{'Sensoren':'Sensors','Sensoren auswählen':'Select sensors'
 Object.assign(LM_EN,{"Sensor": "Sensor", "Sensor-Entität": "Sensor entity", "Aktueller Zustand": "Current state", "Mögliche Zustände": "Available states", "Offen-Zustände": "Open states", "Geschlossen-Zustände": "Closed states", "Mehrere Werte durch Komma trennen.": "Separate multiple values with commas.", "Offen- und Geschlossen-Zustände vollständig angeben.": "Enter both open and closed states.", "Offen- und Geschlossen-Zustände dürfen sich nicht überschneiden.": "Open and closed states must not overlap.", "Offen- und Geschlossen-Zustände zuerst in den Einstellungen festlegen.": "Configure open and closed states in Settings first.", "Zuerst Zonen, Zimmer oder Lampen auswählen.": "Select zones, rooms or lights first.", "Dem ausgewählten Zimmer sind keine Lampen zugeordnet.": "No lights are assigned to the selected room.", "Der ausgewählten Zone sind keine Lampen zugeordnet.": "No lights are assigned to the selected zone.", "Den ausgewählten Zonen und Zimmern sind keine Lampen zugeordnet.": "No lights are assigned to the selected zones and rooms.", "Die Auswahl enthält keine Lampen.": "The selection contains no lights.", "Weitere Sensoren": "Other sensors", "Unbekannt": "Unknown"});
 Object.assign(LM_EN,{"Hue-Szenen": "Hue scenes", "Hue-Szene": "Hue scene", "Bitte eine mit der Auswahl verknüpfte Hue-Szene auswählen.": "Select a Hue scene linked to the selected lights.", "Ungültige Szenenverknüpfungen.": "Invalid scene links.", "Ungültige Szenenkennzeichnung.": "Invalid scene mapping flag.", "Hue-Szene nicht verfügbar.": "Hue scene unavailable.", "Keine Lampen zugeordnet.": "No lights assigned.", "Wartet auf Vorrang": "Waiting for priority", "Deaktiviert": "Disabled", "Wieder einplanen": "Reschedule", "Heute": "Today"});
 Object.assign(LM_EN,{'Programm bearbeiten':'Edit program','Nach oben sortieren':'Move up','Nach unten sortieren':'Move down'});
+Object.assign(LM_EN,{'Alle sichtbaren auswählen':'Select all visible','Auswahl aufheben':'Clear selection','Keine Treffer für diese Auswahl.':'No matches for this selection.','Name oder Entität suchen':'Search name or entity','Sicherungsdatei':'Backup file','Bitte bestätigen':'Please confirm','Bestätigen':'Confirm','Von (TT.MM.)':'From (DD.MM.)','Bis (TT.MM.)':'Until (DD.MM.)','Der Zeitraum darf über den Jahreswechsel reichen.':'The period may cross New Year.','Gleiche Uhrzeit = ganztägig. Zeitfenster über Mitternacht sind möglich.':'Equal times mean all day. The window may cross midnight.','Noch keine Einträge vorhanden.':'No entries yet.'});
 const LM_DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const lmAction = () => ({id:lmId(),enabled:true,mode:'on',targets:[],brightness:100,kelvin:null,rgb:null,
   event:'fixed',time:'18:00',offset:0,earliest:'00:00',latest:'23:59',sensors:[],delay:120,lux_entity:'',lux_on:80,lux_off:150,on_delay:120,end_action:'restore',lux_end:'above',skips:[]});
@@ -26,6 +27,8 @@ class LightManagerCard extends HTMLElement {
   }
   language(){const key='light-manager:language:'+(this._hass?.user?.id||'local');if(this.languageKey!==key){this.languageKey=key;try{this._language=localStorage.getItem(key)||'de';}catch{this._language='de';}}return this._language==='en'?'en':'de';}
   t(value){const text=String(value??'');if(this.language()!=='en')return text;if(LM_EN[text])return LM_EN[text];
+    if(/^[0-9]+ ausgewählt$/.test(text))return text.replace(' ausgewählt',' selected');
+    if(/^(Farbe|Color): Pfeiltasten zum Wählen, Pos1 für Weiß$/.test(text))return 'Color: use arrow keys to select, Home for white';
     if(text.startsWith('– '))return '– '+this.t(text.slice(2));if(text.startsWith('· '))return '· '+this.t(text.slice(2));
     let m;if((m=text.match(/^(\d+) (Aktion|Aktionen)$/)))return m[1]+(m[1]==='1'?' action':' actions');
     if((m=text.match(/^Schaltaktion (\d+)$/)))return 'Action '+m[1];
@@ -68,7 +71,7 @@ class LightManagerCard extends HTMLElement {
         const button=document.createElement('button');Object.assign(button.dataset,{op:'move-area',id:data.program,delta:data.direction==='up'?'-1':'1'});await this.click({target:button});return;
       }
       if(action==='lm-assignment'&&this.editor){this.editor.lampIds=[...value];return;}
-      if(action==='lm-entity-selection'&&this.editor){this.editor.value.entities=[...value];return;}
+      if(action==='lm-entity-selection'&&this.editor){this.editor.value.entities=[...value];this.translateDom(element);return;}
       if(this.editor&&['lm-brightness','lm-temperature','lm-colour'].includes(action)){
         const a=this.editor.value.actions[Number(data.lmIndex)];
         if(a)a[action==='lm-brightness'?'brightness':action==='lm-temperature'?'kelvin':'rgb']=value;

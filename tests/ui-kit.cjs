@@ -107,6 +107,15 @@ const server=http.createServer((req,res)=>{
   assert.equal(await page.locator('[data-page="settings"] .ui-icon').getAttribute('data-icon'),'settings');
   assert.equal(await nav('settings').evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
   await page.screenshot({path:path.join(root,'test-results/kit-qa-settings-'+width+'.png'),fullPage:true});
+  for(const dark of [false,true]){
+   await page.evaluate(dark=>{for(const [key,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(key,value);},dark);
+   await page.screenshot({path:path.join(root,'test-results/kit-qa-settings-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
+   await page.locator('[data-op="select-lamps"]').click();
+   assert.equal(await page.locator('dialog').evaluate(e=>e.scrollWidth>e.clientWidth),false);
+   await page.screenshot({path:path.join(root,'test-results/kit-qa-picker-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
+   await page.keyboard.press('Escape');
+  }
+
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator(':scope > .toolbar');
   assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth;}),false);
@@ -150,6 +159,8 @@ const server=http.createServer((req,res)=>{
   assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].brightness),null);
   await page.locator('#lm-brightness-0-control [data-ui-keep]').click();
   await page.locator('[data-colormode="0"]').selectOption('white');
+  await page.locator('#lm-white-0').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-white-'+width+'.png'),fullPage:true});
   await page.locator('#lm-white-0').evaluate(e=>{e.value='0';e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));});
   assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].kelvin),6500);
   await page.locator('[data-colormode="0"]').selectOption('color');
