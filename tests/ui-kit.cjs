@@ -57,6 +57,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('[data-action="move-program"]').nth(1).click();
  await page.waitForFunction(()=>host.config.programs[0].name==='Evening');
  async function compareKit(theme,width){
+  await page.mouse.move(0,0);
   await page.evaluate(async({theme})=>{
    const dark=theme==='dark';
    for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
@@ -80,10 +81,16 @@ const server=http.createServer((req,res)=>{
     });
    }return failures;
   });
+  const expanded=await page.locator('.program-title').first().getAttribute('aria-expanded');
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-'+theme+'-'+width+'-'+expanded+'.png'),fullPage:true});
   assert.deepEqual(mismatch,[],theme+' '+width+' must match unmodified UI Kit');
-  await page.screenshot({path:path.join(root,'test-results/kit-qa-'+theme+'-'+width+'.png'),fullPage:true});
   await page.evaluate(()=>document.querySelector('#kit-reference').remove());
  }
+ await page.locator('[data-action="copy-program"]').first().click();
+ assert.equal(await page.locator('[data-path="enabled"]').isChecked(),false);
+ assert.ok((await page.locator('[data-path="name"]').inputValue()).includes('Kopie'));
+ await page.keyboard.press('Escape');
+ assert.equal(await page.evaluate(()=>host.config.programs.length),3);
  const nav=id=>page.locator('[data-action="navigate"][data-page="'+id+'"]');
  const section=id=>page.locator('[data-settings="'+id+'"] > .settings-heading-row > .settings-fold');
  for(const width of [1100,390,320]){
