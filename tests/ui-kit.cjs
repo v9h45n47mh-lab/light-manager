@@ -34,7 +34,7 @@ const server=http.createServer((req,res)=>{
    {entity:'binary_sensor.bewegung',name:'Motion',state:'off',attributes:{device_class:'motion'}},
    {entity:'sensor.lux',name:'Illuminance',state:'42',attributes:{device_class:'illuminance',unit_of_measurement:'lx'}}
   ];
-  window.host={config:fixture,revision:0,calls:[]};
+  window.host={config:fixture,revision:0,calls:[],catalog};
   const card=document.querySelector('light-manager-card');
   card.hass={user:{id:'test'},states:Object.fromEntries(catalog.map(x=>[x.entity,{state:x.state,attributes:{...x.attributes,friendly_name:x.name}}])),callWS:async msg=>{
    host.calls.push(msg);
@@ -61,8 +61,9 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(async({theme})=>{
    const dark=theme==='dark';
    for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
-   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.2.1/family-ui.js');
+   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.2.2/family-ui.js');
    const card=document.querySelector('light-manager-card');
+   if(card.shadowRoot.querySelector('style').textContent!==kit.UI_CSS+'\n')throw Error('Local stylesheet override detected');
    document.querySelector('#kit-reference')?.remove();
    const ref=document.createElement('div');ref.id='kit-reference';ref.style.cssText='position:absolute;left:-10000px;top:0;width:'+card.clientWidth+'px';document.body.append(ref);
    const root=ref.attachShadow({mode:'open'});
@@ -105,6 +106,7 @@ const server=http.createServer((req,res)=>{
   assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth}),false);
   assert.equal(await page.locator('[data-page="settings"] .ui-icon').getAttribute('data-icon'),'settings');
   assert.equal(await nav('settings').evaluate(e=>getComputedStyle(e).color),'rgb(129, 212, 250)');
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-settings-'+width+'.png'),fullPage:true});
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator(':scope > .toolbar');
   assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth;}),false);
@@ -139,9 +141,30 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
   assert.equal(await page.locator('[data-path="name"]').inputValue(),'Evening edited '+width);
   assert.equal(await page.locator('[data-path="name"]').evaluate(e=>e.getRootNode().activeElement===e),true);
-  assert.equal(await page.locator('.choices.days input:checked').count(),7);
-  await page.locator('[data-op="fold-action"]').first().click();
-  assert.equal(await page.locator('[data-brightness="0"]').count(),1);
+  assert.equal(await page.locator('#lm-choices-days input:checked').count(),7);
+  await page.locator('[data-lm-editor-action]').first().click();
+  assert.equal(await page.locator('#lm-brightness-0').count(),1);
+  await page.locator('#lm-brightness-0').evaluate(e=>{e.value='54';e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));});
+  assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].brightness),54);
+  await page.locator('#lm-brightness-0-control [data-ui-keep]').click();
+  assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].brightness),null);
+  await page.locator('#lm-brightness-0-control [data-ui-keep]').click();
+  await page.locator('[data-colormode="0"]').selectOption('white');
+  await page.locator('#lm-white-0').evaluate(e=>{e.value='0';e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));});
+  assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].kelvin),6500);
+  await page.locator('[data-colormode="0"]').selectOption('color');
+  await page.locator('#lm-colour-0 .colour-wheel').focus();await page.keyboard.press('Home');
+  assert.deepEqual(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].rgb),[255,255,255]);
+  await page.evaluate(()=>host.catalog.push({entity:'scene.flur_new',name:'New scene',state:'scening',attributes:{}}));
+  await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
+  assert.equal(await page.locator('[data-colormode="0"] option[value="scene.flur_new"]').count(),1);
+  await page.locator('[data-colormode="0"]').selectOption('scene.flur_new');
+  assert.equal(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.actions[0].mode),'scene');
+  await page.locator('[data-colormode="0"]').selectOption('last');
+  await page.locator('#lm-season [data-season-enabled]').check();
+  await page.locator('#lm-season-start').fill('01.11.');
+  await page.locator('#lm-season-end').fill('30.11.');
+
   await page.screenshot({path:path.join(root,'test-results/kit-qa-dialog-'+width+'.png'),fullPage:true});
   assert.equal(await page.locator('dialog').evaluate(e=>e.scrollWidth>e.clientWidth),false);
   await page.locator('[data-path="name"]').focus();
@@ -150,6 +173,8 @@ const server=http.createServer((req,res)=>{
   await page.locator('[data-op="commit"]').click();
   await page.locator('dialog').waitFor({state:'detached'});
   assert.equal(await page.evaluate(()=>host.config.programs[0].name),'Evening edited '+width);
+  assert.equal(await page.evaluate(()=>host.config.programs[0].season_from),'11-01');
+  assert.equal(await page.evaluate(()=>host.config.programs[0].season_to),'11-30');
   await edit.click();
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('dialog').count(),0);
@@ -163,8 +188,9 @@ const server=http.createServer((req,res)=>{
  await page.locator('.program-head .toggle').first().click();
  assert.equal(await page.evaluate(()=>host.config.programs[0].enabled),true);
  await page.locator('[data-action="edit-program"]').last().click();
- await page.locator('[data-op="fold-action"]').first().click();
+ await page.locator('[data-lm-editor-action]').first().click();
  assert.equal(await page.locator('[data-array="actions.0.sensors"]').count(),1);
+ await page.locator('#lm-window-start').fill('22:00');await page.locator('#lm-window-end').fill('06:00');
  await page.locator('[data-path="name"]').fill('Motion retained after failure');
  await page.evaluate(()=>host.failSave=true);
  await page.locator('[data-op="commit"]').click();
@@ -174,8 +200,20 @@ const server=http.createServer((req,res)=>{
  await page.evaluate(()=>host.failSave=false);
  await page.locator('[data-op="commit"]').click();
  await page.locator('dialog').waitFor({state:'detached'});
- await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.2.1'));
+ await nav('settings').click();
+ await page.locator('[data-op="select-lamps"]').click();
+ await page.locator('#lm-entity-selection-search').fill('Hall');
+ assert.equal(await page.locator('[data-selection-row]:visible').count(),1);
+ await page.locator('[data-selection-row] input[value="light.flur"]').uncheck();
+ assert.deepEqual(await page.evaluate(()=>document.querySelector('light-manager-card').editor.value.entities),[]);
+ await page.locator('[data-selection-row] input[value="light.flur"]').check();
+ await page.keyboard.press('Escape');
+ assert.equal(await page.evaluate(()=>host.config.lamps.length),1);
+ await nav('time').click();await page.locator('[data-op="once"]').click();
+ assert.equal(await page.locator('#lm-once-date').isDisabled(),true);
+ await page.keyboard.press('Escape');
+ await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-action="lm-language"][data-language="en"]').click();
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.2.2'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -186,7 +224,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('ha-card').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 32, 32)');
  await page.screenshot({path:path.join(root,'test-results/kit-qa-dark.png'),fullPage:true});
  await nav('help').click();
- assert.ok((await page.locator('.guide').innerText()).includes('HA UI Kit 1.2.1'));
+ assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.2.2'));
  assert.deepEqual(errors,[]);
  console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, group counts and folds, program editing, native dialog and Escape.');
  await browser.close();server.close();

@@ -1,6 +1,6 @@
-import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, navigation, section as uiSection, row as uiRow, toggle as uiToggle, programGroup, programRow, actionRow, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI} from './family-ui/1.2.1/family-ui.js';
-/* Light Manager 1.2.4 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.2.4';
+import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, navigation, section as uiSection, row as uiRow, toggle as uiToggle, programGroup, programRow, actionRow, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI, multiSelect, checkboxGroup, weekdayPicker, rangeControl, whiteTemperatureControl, colourPicker, timeWindow, seasonPicker, actionEditor as uiActionEditor, sensorOverview, historyList, languagePicker, backupControls, helpContent, feedback, emptyState, dayAgenda, statusBadge, programOrderButtons, confirmDialog, downloadJSON} from './family-ui/1.2.2/family-ui.js';
+/* Light Manager 1.2.5 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.2.5';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -14,181 +14,15 @@ Object.assign(LM_EN,{'Programm bearbeiten':'Edit program','Nach oben sortieren':
 const LM_DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const lmAction = () => ({id:lmId(),enabled:true,mode:'on',targets:[],brightness:100,kelvin:null,rgb:null,
   event:'fixed',time:'18:00',offset:0,earliest:'00:00',latest:'23:59',sensors:[],delay:120,lux_entity:'',lux_on:80,lux_off:150,on_delay:120,end_action:'restore',lux_end:'above',skips:[]});
-const LM_STYLE = `.settings-sensor-value{margin-inline-start:8px}
-
-.time-heading{justify-content:space-between}
-
-.list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.tag{display:inline-flex;font-size:12px;color:var(--lm-muted);margin:0 10px 0 0}
-.tag.on{color:var(--lm-accent)}
-.empty{padding:24px 0;color:var(--lm-muted);line-height:1.6}
-.empty strong{display:block;font-weight:400}
-.alert{margin:8px 0;padding:10px 12px;border-radius:4px;background:color-mix(in srgb,var(--warning-color,#ffb300) 10%,transparent);color:var(--primary-text-color,#212121);font-size:13px;line-height:1.5}
-.alert.error{background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent);color:var(--error-color,#db4437)}
-
-.summary{font-size:13px;line-height:1.5}
-.switch{display:flex;align-items:center;gap:8px;min-height:32px;font-size:13px}
-.overview-panel{border-bottom:1px solid var(--lm-line)}
-.overview-toggle{display:flex;align-items:center;gap:6px;padding:10px 16px;color:var(--lm-muted);font-size:12px;border-radius:0}
-.overview{padding:0 16px 14px}
-.overview[hidden]{display:none}
-.sun-row{display:flex;align-items:center;gap:28px;padding:4px 0 12px}
-.sun-value{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-variant-numeric:tabular-nums}
-.overview-group+.overview-group{margin-top:14px}
-.sensor-grid{display:flex;flex-wrap:wrap;align-items:center;gap:9px 24px}
-.sensor-value{display:inline-flex;flex:0 1 auto;max-width:100%;align-items:center;justify-content:flex-start;gap:8px;min-width:0;font-size:13px;line-height:1.5}
-.sensor-label{min-width:0;overflow-wrap:anywhere}
-.sensor-state{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-variant-numeric:tabular-nums}
-.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.backup-actions{margin-top:12px}
-.divider{border:0;border-top:1px solid var(--lm-line);margin:20px 0}
-.planned-row{padding:12px 0}
-.planned-row strong{font-size:13px}
-.planned-row.skipped strong{text-decoration:line-through}
-.planned-time{white-space:nowrap}
-.history{margin-top:12px}
-.schedule-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-@media(max-width:600px){.schedule-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-.choices{display:flex;flex-wrap:wrap;gap:9px 14px;max-height:180px;overflow:auto;padding:8px 0}
-.choices label{display:flex;align-items:center;gap:7px;font-size:13px;min-height:28px;max-width:100%;overflow-wrap:anywhere}
-.choices.stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-.days-field>span{font-size:14px;font-weight:500;color:var(--primary-text-color,#212121)}
-.choices.days{gap:6px}
-.days label{position:relative;cursor:pointer;min-height:0}
-.days input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.days input:checked+span{color:var(--lm-accent);background:color-mix(in srgb,var(--lm-accent) 12%,transparent);border-color:transparent}.days input:focus-visible+span{outline:2px solid var(--lm-accent)}
-.days span{pointer-events:none;display:block;padding:8px 11px;border:1px solid var(--lm-line);border-radius:16px;font-size:12px}
-.editor-action{border:1px solid var(--lm-line);border-radius:8px;padding:16px;margin:12px 0;background:transparent}
-.editor-action-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.action-fold{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:4px 0;text-align:left;color:var(--primary-text-color,#212121);border-radius:4px}
-.action-fold-text{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}
-.action-fold-text strong{font-size:14px;font-weight:500}
-.editor-action-body{margin-top:16px;padding-top:16px;border-top:1px solid var(--lm-line)}
-.editor-action .list-tools{gap:0}
-.technical-id{font-family:monospace;overflow-wrap:anywhere}
-.lamp-selection{max-height:55dvh;grid-template-columns:1fr!important}
-.lamp-selection [hidden]{display:none}
-.season-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:420px;margin-top:12px}
-.actions-heading{font-size:14px;font-weight:500;margin:8px 0 12px}
-.advanced summary{cursor:pointer;color:var(--lm-muted);font-size:12px;margin-top:12px}
-.brightness-row{display:flex;align-items:center;gap:16px}
-.brightness-row output{min-width:48px;font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
-.white-labels{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
-.white-labels output{font-variant-numeric:tabular-nums}
-.language-picker{display:flex;gap:8px}
-.guide{font-size:14px;line-height:1.65;padding:10px 0}
-.guide pre{background:var(--secondary-background-color,#f5f5f5);padding:12px;border-radius:4px;white-space:pre-wrap}
-@media(max-width:600px){
-
-.choices.stack{grid-template-columns:1fr}
-.editor-action{padding:12px}
-.editor-action-head{align-items:flex-start;flex-wrap:wrap;gap:8px}
-.action-fold{flex-basis:100%}
-.editor-action-head>.list-tools{margin-left:28px;justify-content:flex-end;flex:1}
-.days{gap:5px}
-.days span{padding:8px 10px}
-}
-.entity-label{display:flex;flex-direction:column;gap:4px;min-width:0}
-.entity-label strong{font-size:14px;font-weight:500}
-.lamp-selection label{padding:7px 0}
-.target-choices{border:1px solid var(--lm-line);border-radius:6px;overflow:hidden}
-.target-choices details+details{border-top:1px solid var(--lm-line)}
-.target-choices summary{padding:12px;cursor:pointer;font-size:14px;font-weight:500}
-.colour-control{align-items:center;padding:8px 16px 16px;gap:16px}
-.colour-control>span{align-self:flex-start}
-.colour-wheel{width:min(100%,340px);aspect-ratio:1;border-radius:50%;position:relative;touch-action:none;cursor:crosshair;background:radial-gradient(circle closest-side,#fff 0%,#ffffff00 100%),conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);flex-shrink:0}
-.colour-wheel:focus-visible{outline:3px solid var(--lm-accent);outline-offset:5px}
-.colour-marker{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px #0009,0 0 0 1px #0004;pointer-events:none}
-.colour-preview{display:flex;align-items:center;gap:10px;font-size:13px;font-family:monospace}
-.colour-preview>span{width:24px;height:24px;border-radius:50%;border:1px solid var(--lm-line)}
-.choices.lamp-selection{grid-auto-rows:max-content;align-content:start;gap:0;max-height:min(55dvh,520px);overflow-y:auto;overflow-x:hidden;padding:0 4px}
-.choices.lamp-selection>label{align-items:flex-start;min-height:0;padding:12px 0;border-bottom:1px solid var(--lm-line);line-height:1.45}
-.choices.lamp-selection>label:last-child{border-bottom:0}
-.choices.lamp-selection .entity-label{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;flex:1;min-width:0}
-.choices.lamp-selection .entity-label strong{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
-.member-fold{display:flex;align-items:center;gap:8px;padding:0;color:var(--primary-text-color,#212121);text-align:left;min-width:0;width:100%}
-.member-fold strong{flex:1;min-width:0;overflow-wrap:anywhere}
-.assignment-group{border-bottom:1px solid var(--lm-line)}
-.assignment-group:last-child{border-bottom:0}
-.assigned-lamps{padding:0 0 12px 28px;font-size:13px;line-height:1.5}
-.assigned-lamps>div{padding:4px 0;overflow-wrap:anywhere}
-.planned-heading{margin:10px 0 6px}
-.planned-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:9px 0}
-.planned-time{font-size:14px;font-variant-numeric:tabular-nums;line-height:1.4}
-.planned-cover{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
-.planned-target{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;min-width:0}
-.planned-cover strong{font-size:13px;font-weight:500}
-.planned-position{font-size:12px;color:var(--lm-muted);font-variant-numeric:tabular-nums}
-.planned-detail{font-size:12px;color:var(--lm-muted);line-height:1.4}
-.planned-action,.sensor-action{align-self:center}
-.sensor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:9px 0}
-.sensor-summary{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
-.sensor-summary strong{font-size:13px;font-weight:500}
-.sensor-paused .sensor-summary{opacity:.6}
-.plan-status{color:var(--lm-accent);font-size:12px}
-@media(max-width:600px){.planned-row{grid-template-columns:40px minmax(0,1fr) auto;gap:3px 8px}
-.planned-target{flex-direction:column;align-items:flex-start;gap:2px}
-.planned-time{font-size:13px}
-.sensor-row{grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:8px}
-}
-.choices.stack{grid-auto-rows:max-content;align-content:start}
-.choices.scene-choices{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;gap:0;max-height:300px;overflow-y:auto;overflow-x:hidden;padding:0 4px}
-.choices.scene-choices>label{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.15fr);gap:10px;align-items:start;min-height:0;padding:8px 0;border-bottom:1px solid var(--lm-line);line-height:1.45}
-.choices.scene-choices>label:last-child{border-bottom:0}
-.scene-choices .entity-label{display:contents}
-.scene-choices .entity-label strong{min-width:0}
-.scene-choices .entity-label strong{font-size:13px}
-.scene-choices .entity-label strong{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
-.light-selection-divider{width:100%;border:0;border-top:2px solid var(--lm-line);margin:8px 0;grid-column:1/-1}
-.choices.lamp-assignment>label{padding:6px 0}
-.choices.lamp-assignment .entity-label strong{font-size:13px}
-.choices.lamp-table>label{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:start;padding:6px 0;min-height:32px}
-.choices.lamp-table .entity-label{display:contents}
-.choices.lamp-table .entity-label strong{font-size:13px;line-height:1.35}
-.choices.lamp-table>label[hidden]{display:none}
-.lamp-table .light-selection-divider{margin:5px 0}
-@media(max-width:600px){.planned-row[data-once-program] .planned-action{grid-column:2/-1;justify-self:end}
-}
-@media (max-width:600px){
-
-.editor-action-head>.list-tools{margin-left:0;gap:4px}
-.time-heading{gap:4px}
-.choices:not(.days) label{min-height:44px}
-.target-choices summary{min-height:44px}
-}
-.daily-history-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--lm-line);font-size:12px}
-.daily-history-row:last-child{border-bottom:0}
-.daily-command{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
-.daily-command strong{font-size:13px;font-weight:500}
-.command-result{display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;color:var(--success-color,#388e3c)}
-.failed .command-result,.failure-reason{color:var(--error-color,#db4437)}
-@media(max-width:380px){.daily-history-row{gap:6px;grid-template-columns:36px minmax(0,1fr) auto}
-.command-result{font-size:10px}
-}
-/* Lighting-specific arrangement; shared controls come from UI_CSS. */
-:host{--lm-accent:var(--primary-color,#03a9f4);--lm-muted:var(--secondary-text-color,#727272);--lm-line:var(--divider-color,#e0e0e0);--lm-bg:var(--ha-card-background,var(--card-background-color,#fff))}
-.list-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}
-
-.form{min-height:0;overscroll-behavior:contain}.full{min-width:0}
-.alert{padding:12px 16px;font-size:13px;color:var(--error-color,#db4437);background:color-mix(in srgb,var(--error-color,#db4437) 8%,transparent)}
-
-.sun-value .ui-icon{color:var(--primary-color,#03a9f4)}.sensor-state .ui-icon{width:18px;height:18px}
-.dialog-host footer .error{flex-basis:100%}
-@media(max-width:600px){.fields{grid-template-columns:minmax(0,1fr)}}
-
-`;
+const LM_STYLE = '';
 
 class LightManagerCard extends HTMLElement {
   constructor(){super();this.attachShadow({mode:'open'});this.tab='programs';this.section='lamps';this.error='';this.expanded=new Set();
     this.settingsOpen=new Set();this.memberListsOpen=new Set();
     this.shadowRoot.addEventListener('click',e=>this.click(e));this.shadowRoot.addEventListener('input',e=>this.input(e));this.shadowRoot.addEventListener('change',e=>this.change(e));
-    this.shadowRoot.addEventListener('pointerdown',e=>this.wheelPointer(e));
-    this.shadowRoot.addEventListener('pointermove',e=>{if(e.target.hasPointerCapture?.(e.pointerId))this.wheelPointer(e);});
-    this.shadowRoot.addEventListener('pointerup',e=>{if(e.target.hasPointerCapture?.(e.pointerId))e.target.releasePointerCapture(e.pointerId);});
-    this.shadowRoot.addEventListener('keydown',e=>this.wheelKey(e));
     this.shadowRoot.addEventListener('toggle',e=>{if(this.editor&&e.target.dataset.targetGroup){this.editor.targetGroups??={};this.editor.targetGroups[e.target.dataset.targetGroup]=e.target.open;}},true);
     this.shadowRoot.addEventListener('toggle',e=>{if(this.editor&&e.target.dataset.lampSection){this.editor.lampSections??={};this.editor.lampSections[e.target.dataset.lampSection]=e.target.open;}},true);
-    this.shadowRoot.addEventListener('keydown',e=>{if(e.key==='Escape'&&this.editor&&!this.busy){this.editor=null;this.render();}});
+    this.shadowRoot.addEventListener('keydown',e=>{if(e.key==='Escape'&&this.editor&&!this.busy&&!this.confirming){this.editor=null;this.render();}});
   }
   language(){const key='light-manager:language:'+(this._hass?.user?.id||'local');if(this.languageKey!==key){this.languageKey=key;try{this._language=localStorage.getItem(key)||'de';}catch{this._language='de';}}return this._language==='en'?'en':'de';}
   t(value){const text=String(value??'');if(this.language()!=='en')return text;if(LM_EN[text])return LM_EN[text];
@@ -222,8 +56,30 @@ class LightManagerCard extends HTMLElement {
   getCardSize(){return 6;}
   static getStubConfig(){return {type:'custom:light-manager-card'};}
   connectedCallback(){
-    this.unbindUI ||= bindUI(this.shadowRoot,({action,data,checked,element})=>{
+    this.unbindUI ||= bindUI(this.shadowRoot,async ({action,data,checked,element,value,valid})=>{
       if(this.busy)return;
+      if(action==='lm-language'){this._language=data.language;try{localStorage.setItem(this.languageKey,this._language);}catch{}this.render();return;}
+      if(action==='lm-export'){downloadJSON({product:'Light Manager',version:LM_VERSION,config:this.config},{filename:'Light-Manager-Sicherung-'+this.data.today+'.json'});return;}
+      if(action==='lm-import'){
+        if(!await this.confirmUI(this.t('Gesamte Light-Manager-Konfiguration durch diese Sicherung ersetzen? Aktive Programme werden sofort neu bewertet.')))return;
+        await this.save(value.config||value);this.render();return;
+      }
+      if(action==='lm-area-order'){
+        const button=document.createElement('button');Object.assign(button.dataset,{op:'move-area',id:data.program,delta:data.direction==='up'?'-1':'1'});await this.click({target:button});return;
+      }
+      if(action==='lm-assignment'&&this.editor){this.editor.lampIds=[...value];return;}
+      if(action==='lm-entity-selection'&&this.editor){this.editor.value.entities=[...value];return;}
+      if(this.editor&&['lm-brightness','lm-temperature','lm-colour'].includes(action)){
+        const a=this.editor.value.actions[Number(data.lmIndex)];
+        if(a)a[action==='lm-brightness'?'brightness':action==='lm-temperature'?'kelvin':'rgb']=value;
+        return;
+      }
+      if(action==='lm-window'&&this.editor){this.editor.value.start=value.start;this.editor.value.end=value.end;return;}
+      if(action==='lm-season'&&this.editor){
+        this.editor.value.season_enabled=value.enabled;
+        this.editor.seasonInputs={season_from:element.querySelector('[name=start]').value,season_to:element.querySelector('[name=end]').value};
+        return;
+      }
       if(action==='navigate'){
         const page=data.page==='help'?'guide':data.page;
         this.resetFolds();this.tab=page;this.error='';this.render();
@@ -256,7 +112,7 @@ class LightManagerCard extends HTMLElement {
   selectedSensors(){return this.config.sensors.map(s=>({...this.catalog.find(x=>x.entity===s.entity),...s,name:this.entityName(s.entity),attributes:this.catalog.find(x=>x.entity===s.entity)?.attributes||this._hass.states[s.entity]?.attributes||{}}));}
   contactValue(e){const s=this.config.sensors.find(s=>s.entity===e),value=this._hass.states[e]?.state;if(value==null||['unknown','unavailable',''].includes(value))return null;const binary=e.startsWith('binary_sensor.'),opened=s?.open_states||(binary?['on']:[]),closed=s?.closed_states||(binary?['off']:[]);return opened.includes(value)?true:closed.includes(value)?false:null;}
   time(value){return value?new Intl.DateTimeFormat(this.language()==='en'?'en-GB':'de-DE',{timeZone:this.data?.timezone||'Europe/Berlin',hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—';}
-  async refresh(){if(!this._hass||this.loading||this.busy)return;this.loading=true;try{
+  async refresh(){if(!this._hass||this.loading||this.busy||this.confirming)return;this.loading=true;try{
     this.data=await this._hass.callWS({type:'light_manager/get'});if(!this.editor)this.render();else{this.syncSceneOptions();const overview=this.shadowRoot.querySelector('.overview');if(overview){overview.innerHTML=this.overviewContent();this.translateDom(overview);}}
   }catch(e){this.error=e.message||String(e);if(!this.editor)this.render();}finally{this.loading=false;}}
   async save(config,revision=this.data.revision){if(this.busy)return false;if(this.data?.version!==LM_VERSION||this.data?.schema!==4){this.error='Versionskonflikt: Bitte Home Assistant neu starten und Browser neu laden.';return false;}this.busy=true;this.error='';try{
@@ -294,14 +150,12 @@ class LightManagerCard extends HTMLElement {
     return groups;
   }
   lampSettings(){
-    const groups=this.lampAreaGroups(), sortable=groups.filter(group=>group.id);
+    const groups=this.lampAreaGroups(),sortable=groups.filter(g=>g.id);
     return groups.map(group=>{
-      const id=lmEsc(group.id), open=this.memberListsOpen.has('lamp-area:'+group.id), index=sortable.indexOf(group);
-      const move=(delta,label,arrow)=>this.btn('move-area',arrow,`data-id="${id}" data-delta="${delta}" title="${this.t(label)}" aria-label="${this.t(label)}"`,'icon');
-      return `<div class="assignment-group"><div class="setting-row"><div class="row-text">${this.btn('fold-members',this.chevron(open)+`<strong>${this.user(group.name)}</strong>`,`data-section="lamp-area" data-id="${id}" aria-expanded="${open}"`,'member-fold')}</div>
-        <div class="list-tools">${index>0?move(-1,'Bereich nach oben','↑'):''}${index>=0&&index<sortable.length-1?move(1,'Bereich nach unten','↓'):''}</div></div>
-        <div class="assigned-lamps" ${open?'':'hidden'}>${group.lamps.map(lamp=>`<div class="setting-row"><div class="row-text"><strong>${this.user(lamp.name)}</strong></div><div class="list-tools">${this.editBtn('lamps',lamp.id)}${this.removeBtn('lamps',lamp.id)}</div></div>`).join('')}</div></div>`;
-    }).join('')||'<p class="version-info">Keine Einträge.</p>';
+      const index=sortable.findIndex(g=>g.id===group.id),key='lamp-area:'+group.id;
+      const trailing=index<0?'':programOrderButtons({programId:group.id,index,count:sortable.length,desktopOnly:false,action:'lm-area-order',disabled:this.busy,upLabel:this.t('Bereich nach oben'),downLabel:this.t('Bereich nach unten')});
+      return uiSection({id:'lm-area-'+(group.id||'none'),title:group.name,expanded:this.memberListsOpen.has(key),trailing,content:group.lamps.map(lamp=>uiRow({title:lamp.name,trailing:this.editBtn('lamps',lamp.id)+this.removeBtn('lamps',lamp.id)})).join('')}).replace('data-ui="collapse"',`data-ui="collapse" data-lm-member="${lmEsc(key)}"`);
+    }).join('')||emptyState(this.t('Keine Einträge.'));
   }
   targets(){return [...this.config.lamps,...(this.data.areas||[]),...this.config.zones,...this.config.rooms];}
   targetNames(a){return a.targets.map(id=>this.targets().find(t=>t.id===id)?.name||id).join(', ')||this.t('Noch keine Lampen');}
@@ -337,7 +191,7 @@ class LightManagerCard extends HTMLElement {
   }
   editBtn(section,id){return this.btn('edit',this.icon('edit'),`data-section="${section}" data-id="${lmEsc(id)}" title="Bearbeiten" aria-label="Bearbeiten"`,'icon');}
   removeBtn(section,id){return this.btn('delete',this.icon('delete'),`data-section="${section}" data-id="${lmEsc(id)}" title="Löschen" aria-label="Löschen"`,'icon danger');}
-  empty(title,body){return `<div class="empty"><strong>${title}</strong><span class="muted">${body}</span></div>`;}
+  empty(title,body){return emptyState([this.t(title),this.t(body)].filter(Boolean).join(' '));}
   render(){const d=this.data,ed=this.editor,sameEditor=ed&&ed===this.renderedEditor;
     const focused=this.shadowRoot.activeElement;
     const focusState=sameEditor&&focused?.closest('dialog')?{path:focused.dataset.path,start:focused.selectionStart,end:focused.selectionEnd}:null;
@@ -349,10 +203,10 @@ class LightManagerCard extends HTMLElement {
     this.shadowRoot.querySelector('ha-card').innerHTML=`
       ${navigation({label:this.t('Lichtsteuerung'),items:[{id:'programs',label:this.t('Programme')},{id:'time',label:this.t('Zeitprogramm'),icon:'schedule'},{id:'sensors',label:this.t('Sensorprogramme'),icon:'sensors'}],active:this.tab==='guide'?'help':this.tab==='status'?'settings':this.tab,helpLabel:this.t('Anleitung'),settingsLabel:this.t('Einstellungen')})}
       ${d&&['programs','sensors'].includes(this.tab)?this.overview():''}
-      <main>${this.error&&!ed?`<div class="alert error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}
-      ${d&&d.version!==LM_VERSION?'<div class="alert error">Versionskonflikt. Home Assistant neu starten und Browser neu laden.</div>':''}
+      <main>${this.error&&!ed?`<div class="fui-feedback error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}
+      ${d&&d.version!==LM_VERSION?'<div class="fui-feedback error">Versionskonflikt. Home Assistant neu starten und Browser neu laden.</div>':''}
       ${!d?this.empty('Integration unter Geräte & Dienste hinzufügen.',''):
-        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?`<article class="guide">${versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}${this.guide()}</article>`:this.programPage())}</main>`;
+        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?helpContent({content:versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})+this.guide()}):this.programPage())}</main>`;
     const previousDialog=this.shadowRoot.querySelector('dialog');
     previousDialog?.close();
     this.shadowRoot.querySelector('.dialog-host').innerHTML=ed?this.dialog():'';
@@ -371,7 +225,7 @@ class LightManagerCard extends HTMLElement {
     if(ed){const form=this.shadowRoot.querySelector('.form');if(form)form.scrollTop=scroll;
       if(!sameEditor)this.shadowRoot.querySelector('.form input,.form select')?.focus({preventScroll:true});
       requestAnimationFrame(()=>{if(this.editor===ed&&form?.isConnected)form.scrollTop=scroll;});}
-    for(const node of this.shadowRoot.querySelectorAll('.program-title>span,.ride-info>strong'))node.setAttribute('data-user-content','');
+    for(const node of this.shadowRoot.querySelectorAll('.program-title>span,.ride-info>strong,.row-text>strong,.sensor-label,.cover-option strong,.cover-option small,.ride-fold-text strong'))node.setAttribute('data-user-content','');
     this.translateDom(this.shadowRoot);
     if(focusState?.path){
       const input=[...this.shadowRoot.querySelectorAll('[data-path]')].find(el=>el.dataset.path===focusState.path);
@@ -398,10 +252,12 @@ class LightManagerCard extends HTMLElement {
   readingKind(e){if(this.config.programs.some(p=>p.kind==='contact'&&p.actions.some(a=>a.sensors?.includes(e))))return 'contact';if(this.config.programs.some(p=>p.kind==='motion'&&p.actions.some(a=>a.sensors?.includes(e))))return 'motion';const entry=this.catalog.find(s=>s.entity===e)||{attributes:this._hass.states[e]?.attributes||{}};return this.isLux(entry)?'lux':'other';}
   readingValue(e,kind){const st=this._hass.states[e],v=st?.state;if(!st||v==='unavailable')return this.t('Nicht verfügbar');if(v==='unknown')return this.t('Unbekannt');if(kind==='contact'){const value=this.contactValue(e);return this.t(value===null?'Unbekannt':value?'Offen':'Geschlossen');}if(kind==='motion')return this.t(v==='on'?'Bewegung':v==='off'?'Keine Bewegung':'Unbekannt');const n=Number(v),unit=st.attributes.unit_of_measurement||(kind==='lux'?'lx':'');if(v!==''&&Number.isFinite(n)){const value=kind==='lux'&&unit==='klx'?n*1000:n;return new Intl.NumberFormat(this.language()==='en'?'en-GB':'de-DE',{maximumFractionDigits:kind==='lux'?0:2}).format(value)+(unit?' '+(kind==='lux'?'lx':unit):'');}return v+(unit?' '+unit:'');}
   readingIcon(kind){return uiIcon(({lux:'illuminance',motion:'sensors',other:'unknown'})[kind]||kind);}
-  overviewContent(){const sensors=[...new Set(this.config.programs.flatMap(p=>p.actions.flatMap(a=>[...(a.sensors||[]),...(a.lux_entity?[a.lux_entity]:[])])))].sort((a,b)=>this.entityName(a).localeCompare(this.entityName(b)));
-    return `${this.tab==='sensors'?'':`<div class="sun-row">${[['sunrise','Sonnenaufgang'],['sunset','Sonnenuntergang']].map(([event,label])=>`<span class="sun-value" title="${this.t(label)}" aria-label="${this.t(label)} ${this.time(this.data.sun[event])}">${this.icon(event)}<time>${this.time(this.data.sun[event])}</time></span>`).join('')}</div>`}${[['contact','Öffnungskontakte'],['motion','Bewegungsmelder'],['lux','Helligkeit'],['other','Weitere Sensoren']].map(([kind,label])=>{const entries=sensors.filter(e=>this.readingKind(e)===kind);return entries.length?`<section class="overview-group" aria-label="${this.t(label)}"><h4>${label}</h4><div class="sensor-grid">${entries.map(e=>{const text=this.readingValue(e,kind),value=kind==='contact'?this.contactValue(e):null,lock=value!==null;return `<div class="overview-item sensor-value"><span class="sensor-label">${this.user(this.entityName(e))}</span><span class="sensor-state" title="${lmEsc(text)}">${this.readingIcon(lock?(value?'unlock':'lock'):kind)}<span ${lock?'class="visually-hidden"':''}>${lmEsc(text)}</span></span></div>`;}).join('')}</div></section>`:'';}).join('')}`;
+  overviewContent(){const template=document.createElement('template');template.innerHTML=this.overview();return template.content.querySelector('.overview').innerHTML;}
+  overview(){
+    const sensors=[...new Set(this.config.programs.flatMap(p=>p.actions.flatMap(a=>[...(a.sensors||[]),...(a.lux_entity?[a.lux_entity]:[])])))].sort((a,b)=>this.entityName(a).localeCompare(this.entityName(b)));
+    const groups=[['contact','Öffnungskontakte'],['motion','Bewegungsmelder'],['lux','Helligkeit'],['other','Weitere Sensoren']].map(([kind,title])=>({title:this.t(title),items:sensors.filter(e=>this.readingKind(e)===kind).map(e=>{const v=kind==='contact'?this.contactValue(e):null;return {label:this.entityName(e),value:this.readingValue(e,kind),icon:v!==null?(v?'unlock':'lock'):({lux:'illuminance',motion:'sensors',other:'unknown'})[kind]||kind};})})).filter(g=>g.items.length);
+    return sensorOverview({id:'lm-overview',title:this.t('Messwerte'),expanded:this.overviewVisible(),sunrise:this.tab==='sensors'?'':this.time(this.data.sun.sunrise),sunset:this.tab==='sensors'?'':this.time(this.data.sun.sunset),groups}).replace('data-ui="collapse"','data-ui="collapse" data-lm-overview');
   }
-  overview(){const open=this.overviewVisible();return `<div class="overview-panel">${this.btn('overview',this.chevron(open)+'<span>Messwerte</span>',`aria-expanded="${open}" aria-controls="lm-overview"`,'overview-toggle')}<section class="overview" id="lm-overview" aria-label="${this.tab==='sensors'?'Sensorwerte':'Sonnenzeiten und Sensorwerte'}" ${open?'':'hidden'}>${this.overviewContent()}</section></div>`;}
   programPage(){
     const programs=this.config.programs.filter(p=>!p.once_date);
     const groups=[
@@ -425,9 +281,15 @@ class LightManagerCard extends HTMLElement {
     const due=Date.parse(row.due);
     const once=this.config.programs.find(p=>p.id===row.program)?.once_date;
     return !completed.has(row.action)&&(once||!Number.isFinite(due)||due>=now);
-  });for(const p of this.config.programs.filter(p=>p.once_date===this.data.today))for(const a of p.actions)if(!completed.has(a.id)&&!rows.some(row=>row.program===p.id&&row.action===a.id))rows.push({program:p.id,action:a.id,once_time:a.time,skipped:a.skips.includes(this.data.today)});rows.sort((a,b)=>(a.once_time||this.time(a.due)).localeCompare(b.once_time||this.time(b.due)));return `<div class="planned-heading toolbar time-heading"><h3>${lmEsc(this.dateHeading())}</h3>${this.btn('once','+ Zusätzliche Aktion')}</div>${rows.length?rows.map(row=>{const p=this.config.programs.find(p=>p.id===row.program),a=p?.actions.find(a=>a.id===row.action);return !a?'':`<section class="planned-row ${row.skipped?'skipped':''}" data-time-action="${lmEsc(a.id)}" ${p.once_date?`data-once-program="${lmEsc(p.id)}"`:''}><time class="planned-time" datetime="${lmEsc(row.due||'')}">${lmEsc(row.once_time||this.time(row.due))}</time><div class="planned-cover"><div class="planned-target"><strong>${this.user(p.once_date?(a.name?.trim()||this.targetNames(a)):[p.name,a.name?.trim()].filter(Boolean).join(' - '))}</strong><span class="planned-position">${this.t(a.mode==='off'?'Ausschalten':'Einschalten')}</span></div></div><div class="planned-action list-tools">${p.once_date?this.editBtn('programs',p.id)+this.removeBtn('programs',p.id):''}${this.btn('skip',row.skipped?'Wieder einplanen':'Auslassen',`data-program="${lmEsc(p.id)}" data-id="${lmEsc(a.id)}"`,row.skipped?'':'primary')}</div></section>`;}).join(''):this.empty('Heute keine Schaltzeiten.','')}`;}
-  sensorPage(){const rows=this.config.programs.filter(p=>p.kind!=='time').map(p=>({p,rules:this.data.rules.filter(r=>r.program===p.id)})).filter(x=>x.rules.length);return `<div class="planned-heading"><h3>${lmEsc(this.dateHeading())}</h3></div>${rows.length?rows.map(({p,rules})=>{const paused=p.paused_on===this.data.today,active=rules.some(r=>r.eligible&&!r.blocked_reasons?.length),reasons=[...new Set(rules.flatMap(r=>r.blocked_reasons||[]))],status=active?this.t('Aktiv'):this.t('Nicht aktiv')+(reasons.length?' - '+reasons.map(reason=>this.t(reason)).join(', '):'');return `<section class="sensor-row ${p.enabled&&!paused?'':'sensor-paused'}" data-sensor-program="${lmEsc(p.id)}"><div class="sensor-summary"><strong>${this.user(p.name)}</strong><small>${this.t(LM_KINDS[p.kind])} · ${p.start}–${p.end}</small><span class="plan-status">${lmEsc(status)}</span></div><div class="sensor-action list-tools">${p.enabled?this.btn('pause-sensor',paused?'Heute wieder aktivieren':'Bis morgen aussetzen',`data-id="${lmEsc(p.id)}"`,paused?'':'primary'):''}</div></section>`;}).join(''):this.empty('Keine Sensorprogramme.','')}${this.warningList(new Set(this.config.programs.filter(p=>p.once_date).map(p=>p.name+': keine Lampen zugeordnet.')))}`;}
-  warningList(hidden=new Set()){return this.data.warnings.filter(w=>!hidden.has(w)).map(w=>`<div class="alert" role="status">${lmEsc(this.message(w))}</div>`).join('');}
+  });for(const p of this.config.programs.filter(p=>p.once_date===this.data.today))for(const a of p.actions)if(!completed.has(a.id)&&!rows.some(row=>row.program===p.id&&row.action===a.id))rows.push({program:p.id,action:a.id,once_time:a.time,skipped:a.skips.includes(this.data.today)});rows.sort((a,b)=>(a.once_time||this.time(a.due)).localeCompare(b.once_time||this.time(b.due)));return `<div class="toolbar">${this.btn('once','+ Zusätzliche Aktion')}</div>`+dayAgenda({id:'lm-schedule',days:[{title:this.dateHeading(),content:rows.length?rows.map(row=>{const p=this.config.programs.find(p=>p.id===row.program),a=p?.actions.find(a=>a.id===row.action);return !a?'':actionRow({title:(row.once_time||this.time(row.due))+' · '+(p.once_date?(a.name?.trim()||this.targetNames(a)):[p.name,a.name?.trim()].filter(Boolean).join(' - ')),description:this.t(a.mode==='off'?'Ausschalten':'Einschalten'),detail:row.skipped?this.t('Auslassen'):'',actions:(p.once_date?this.editBtn('programs',p.id)+this.removeBtn('programs',p.id):'')+this.btn('skip',row.skipped?'Wieder einplanen':'Auslassen',`data-program="${lmEsc(p.id)}" data-id="${lmEsc(a.id)}"`,row.skipped?'':'primary')});}).join(''):emptyState(this.t('Heute keine Schaltzeiten.'))}]});}
+
+  sensorPage(){const rows=this.config.programs.filter(p=>p.kind!=='time').map(p=>({p,rules:this.data.rules.filter(r=>r.program===p.id)})).filter(x=>x.rules.length);
+    return dayAgenda({id:'lm-sensors',days:[{title:this.dateHeading(),content:rows.length?rows.map(({p,rules})=>{
+      const paused=p.paused_on===this.data.today,active=rules.some(r=>r.eligible&&!r.blocked_reasons?.length),reasons=[...new Set(rules.flatMap(r=>r.blocked_reasons||[]))],status=active?this.t('Aktiv'):this.t('Nicht aktiv')+(reasons.length?' - '+reasons.map(reason=>this.t(reason)).join(', '):'');
+      return actionRow({title:p.name,description:this.t(LM_KINDS[p.kind])+' · '+p.start+'–'+p.end,detail:status,enabled:p.enabled&&!paused,actions:p.enabled?this.btn('pause-sensor',paused?'Heute wieder aktivieren':'Bis morgen aussetzen',`data-id="${lmEsc(p.id)}"`,paused?'':'primary'):''});
+    }).join(''):emptyState(this.t('Keine Sensorprogramme.'))}]})+this.warningList(new Set(this.config.programs.filter(p=>p.once_date).map(p=>p.name+': keine Lampen zugeordnet.')));
+  }
+  warningList(hidden=new Set()){return this.data.warnings.filter(w=>!hidden.has(w)).map(w=>`<div class="fui-feedback warning" role="status">${lmEsc(this.message(w))}</div>`).join('');}
   historyMessage(message){
     return this.message(message).replace(/^(light\.[a-z0-9_]+(?:, light\.[a-z0-9_]+)*)(?= → |: )/,targets=>
       targets.split(', ').map(entity=>{
@@ -437,26 +299,21 @@ class LightManagerCard extends HTMLElement {
         return label.charAt(0).toLocaleUpperCase(this.language())+label.slice(1);
       }).join(', '));
   }
-  statusPage(){return `${this.warningList()}
-    ${Object.keys(this.data.status).length?Object.entries(this.data.status).sort(([a],[b])=>this.entityName(a).localeCompare(this.entityName(b))).map(([e,s])=>`<div class="setting-row"><div class="row-text"><strong>${this.user(this.entityName(e))}</strong><p>${this.user(s.kind==='fallback'?this.t('Rückfallverhalten'):s.program)} · ${lmEsc(this.t(LM_KINDS[s.kind]||'Rückfallverhalten'))}</p></div><span class="tag on">${lmEsc(s.mode==='scene'?'Szene':s.mode==='on'?'Ein':'Aus')}</span></div>`).join(''):this.empty('Kein aktives Programm.','')}`;}
-  dailyHistory(){
-    const rows=[...(this.data.daily_history||[])].sort((a,b)=>a.time.localeCompare(b.time));
-    if(!rows.length)return `<p class="version-info">${this.language()==='en'?'No switching commands executed today.':'Heute wurden noch keine Schaltungen ausgeführt.'}</p>`;
-    return `<div class="daily-history" role="list">${rows.map(row=>{
-      const label=this.language()==='en'?(row.error?'Failed':'Completed'):(row.error?'Fehlgeschlagen':'Erfolgreich');
-      const time=new Date(row.time).toLocaleTimeString(this.language(),{hour:'2-digit',minute:'2-digit',timeZone:this.data.timezone});
-      return `<div class="daily-history-row ${row.error?'failed':'completed'}" role="listitem"><time datetime="${lmEsc(row.time)}">${lmEsc(time)}</time><div class="daily-command"><strong>${this.user((row.entities||[]).map(e=>this.entityName(e)).join(', '))}</strong><small>${lmEsc(this.actionText(row.action))}</small>${row.error?`<small class="failure-reason">${lmEsc(this.historyMessage(row.message))}</small>`:''}</div><span class="command-result">${this.icon(row.error?'failure':'success')}${label}</span></div>`;
-    }).join('')}</div>`;
-  }
+  statusPage(){return Object.keys(this.data.status).length?Object.entries(this.data.status).sort(([a],[b])=>this.entityName(a).localeCompare(this.entityName(b))).map(([entity,v])=>uiRow({title:this.entityName(entity),description:(v.kind==='fallback'?this.t('Rückfallverhalten'):v.program)+' · '+this.t(LM_KINDS[v.kind]||'Rückfallverhalten'),trailing:statusBadge({label:this.t(v.mode==='scene'?'Szene':v.mode==='on'?'Ein':'Aus'),state:v.mode==='off'?'neutral':'active'})})).join(''):emptyState(this.t('Kein aktives Programm.'));}
+  dailyHistory(){return historyList({entries:[...(this.data.daily_history||[])].sort((a,b)=>a.time.localeCompare(b.time)).map(row=>({
+    time:new Date(row.time).toLocaleTimeString(this.language(),{hour:'2-digit',minute:'2-digit',timeZone:this.data.timezone}),datetime:row.time,
+    title:(row.entities||[]).map(e=>this.entityName(e)).join(', '),description:this.actionText(row.action),detail:row.error?this.historyMessage(row.message):'',
+    status:row.error?'error':'success',result:this.t(row.error?'Fehlgeschlagen':'Erfolgreich')
+  }))});}
   settings(){const c=this.config;
     const section=(id,title,content,trailing='')=>uiSection({id:'lm-settings-'+id,title,content,trailing,expanded:this.settingsOpen.has(id)}).replace('data-settings="lm-settings-','data-settings="');
-    return `<section class="settings-group"><div class="settings-heading-row"><h3>${this.t('Sprache')}</h3><div class="language-picker">${this.btn('language','DE',`data-language="de" aria-pressed="${this.language()==='de'}" title="Deutsch"`)}${this.btn('language','EN',`data-language="en" aria-pressed="${this.language()==='en'}" title="English"`)}</div></div></section>
+    return uiRow({title:this.t('Sprache'),trailing:languagePicker({value:this.language(),action:'lm-language'})})+`
       <section class="settings-group"><div class="settings-heading-row"><h3>${this.t('Urlaubsmodus')}</h3>${this.toggle(c.vacation,this.t('Urlaubsmodus'),'data-vacation')}</div></section>
       ${section('lamps',this.t('Lampen'),this.lampSettings(),this.btn('select-lamps',this.t('Lampen auswählen'),'','primary'))}
       ${section('sensors',this.t('Sensoren'),c.sensors.map(v=>uiRow({title:this.entityName(v.entity),description:this.readingValue(v.entity,this.readingKind(v.entity)),trailing:this.editBtn('sensors',v.entity)}).replace('<strong>','<strong data-user-content>')).join('')||notice(this.t('Keine Einträge.')),this.btn('select-sensors',this.t('Sensoren auswählen'),'','primary'))}
       ${section('status',this.t('Lampenstatus'),this.statusPage())}
       ${section('daily-history',this.language()==='en'?"Today's switching commands":'Heutige Schaltungen',this.dailyHistory())}
-      <section class="settings-group"><h3>${this.t('Sicherung')}</h3><div class="toolbar backup-actions">${this.btn('export',this.t('Sicherung erstellen'))}${this.btn('import',this.t('Sicherung wiederherstellen'))}</div><input type="file" id="lm-backup" accept="application/json,.json" hidden></section>
+      <section class="settings-group"><h3>${this.t('Sicherung')}</h3>${backupControls({id:'lm-backup',exportAction:'lm-export',importAction:'lm-import',exportLabel:this.t('Sicherung erstellen'),importLabel:this.t('Sicherung wiederherstellen'),maxBytes:2000000,disabled:this.busy})}</section>
       ${versionInfo({frontend:LM_VERSION,backend:this.data.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})}`;
   }
   value(path){return path.split('.').reduce((v,k)=>v?.[k],this.editor.value);}
@@ -471,33 +328,23 @@ class LightManagerCard extends HTMLElement {
     const value=path.endsWith('.mode')&&this.value(path)==='scene'?'on':this.value(path);
     return selectField({id:'lm-field-'+path.replaceAll('.','-'),label,value,options:options.map(([value,label])=>({value,label}))}).replaceAll('<option value=',(path==='entity'||path.endsWith('lux_entity')||path.endsWith('.scene'))?'<option data-user-content value=':'<option value=').replace('<select ',`<select data-path="${path}" ${rerender?'data-redraw':''} `);
   }
-  check(label,path){return `<label class="switch"><input type="checkbox" data-path="${path}" ${this.value(path)?'checked':''}><span>${label}</span></label>`;}
-  choices(label,path,items){const values=this.value(path)||[],scenes=path==='scenes';return `<div class="field full ${path==='days'?'days-field':''}"><span>${label}</span><div class="choices ${scenes?'scene-choices':path==='days'?'days':items.length>7?'stack':''}">${items.length?items.map(x=>`<label><input type="checkbox" data-array="${path}" value="${lmEsc(x.id)}" ${values.includes(x.id)?'checked':''}><span ${path==='days'?'':'data-user-content'} ${scenes?'class="entity-label"':''}>${scenes?`<strong>${lmEsc(x.name)}</strong><small class="technical-id">${lmEsc(x.id)}</small>`:lmEsc(x.label||x.name)}</span></label>`).join(''):'<small>Noch keine passenden Einträge vorhanden.</small>'}</div></div>`;}
-  lightList(items,selected,attribute,technical=true){
-    const chosen=new Set(selected),sort=(a,b)=>a.name.localeCompare(b.name,this.language(),{sensitivity:'base',numeric:true})||a.id.localeCompare(b.id);
-    const rows=items.slice().sort(sort),row=x=>`<label data-lamp-row="${lmEsc((x.id+' '+x.name).toLowerCase())}" data-light-name="${lmEsc(x.name)}"><input type="checkbox" ${attribute} value="${lmEsc(x.id)}" ${chosen.has(x.id)?'checked':''}><span class="entity-label" data-user-content><strong>${lmEsc(x.name)}</strong>${technical?`<small class="technical-id">${lmEsc(x.id)}</small>`:''}</span></label>`;
-    return `<div class="choices stack lamp-selection ${technical?'lamp-table':'lamp-assignment'}" data-light-list>${rows.filter(x=>chosen.has(x.id)).map(row).join('')}<hr class="light-selection-divider" data-light-divider ${!rows.some(x=>chosen.has(x.id))||!rows.some(x=>!chosen.has(x.id))?'hidden':''}>${rows.filter(x=>!chosen.has(x.id)).map(row).join('')}${rows.length?'':'<small>Noch keine passenden Einträge vorhanden.</small>'}</div>`;
+  check(label,path){return checkboxGroup({id:'lm-check-'+path.replaceAll('.','-'),label:'',items:[{id:'yes',label:this.t(label)}],values:this.value(path)?['yes']:[],action:'legacy-selection'}).replace('<input ',`<input data-path="${path}" `);}
+  choices(label,path,items,suffix=''){const args={id:'lm-choices-'+path.replaceAll('.','-')+(suffix?'-'+suffix:''),label:this.t(label),values:this.value(path)||[],action:'legacy-selection'};
+    return '<div class="full">'+(path==='days'?weekdayPicker({...args,labels:LM_DAYS.map(x=>this.t(x))}):checkboxGroup({...args,items:items.map(x=>({id:x.id,label:x.label||x.name,description:x.description}))})).replaceAll('<input ',`<input data-array="${path}" `)+'</div>';
   }
-  updateLightList(list){
-    if(!list)return;const active=this.shadowRoot.activeElement,scroll=list.scrollTop,rows=[...list.querySelectorAll('[data-lamp-row]')],divider=list.querySelector('[data-light-divider]');
-    rows.sort((a,b)=>Number(b.querySelector('input').checked)-Number(a.querySelector('input').checked)||a.dataset.lightName.localeCompare(b.dataset.lightName,this.language(),{sensitivity:'base',numeric:true})||a.querySelector('input').value.localeCompare(b.querySelector('input').value));
-    for(const row of rows.filter(r=>r.querySelector('input').checked))list.append(row);list.append(divider);for(const row of rows.filter(r=>!r.querySelector('input').checked))list.append(row);
-    this.filterLightRows(list);if(active&&list.contains(active))active.focus({preventScroll:true});list.scrollTop=scroll;
-  }
-  filterLightRows(list){const search=(this.shadowRoot.querySelector('[data-lamp-search]')?.value||'').trim().toLowerCase(),rows=[...list.querySelectorAll('[data-lamp-row]')];for(const row of rows)row.hidden=!row.dataset.lampRow.includes(search);const divider=list.querySelector('[data-light-divider]');if(divider)divider.hidden=!rows.some(r=>!r.hidden&&r.querySelector('input').checked)||!rows.some(r=>!r.hidden&&!r.querySelector('input').checked);}
   dialog(){const ed=this.editor,section=ed.section,v=ed.value,picker=['lamp_selection','sensor_selection'].includes(section);let content='';const title={lamps:'Lampe',sensors:'Sensor',rooms:'Zimmer',zones:'Zone',programs:'Programm',lamp_selection:'Lampen auswählen',sensor_selection:'Sensoren auswählen'}[section];
     if(picker){
       const lamps=section==='lamp_selection',saved=lamps?this.config.lamps:this.config.sensors;
       const entities=[...new Set([...this.catalog.filter(x=>lamps?x.entity.startsWith('light.'):x.entity.startsWith('binary_sensor.')||x.entity.startsWith('sensor.')).map(x=>x.entity),...saved.map(l=>l.entity)])].sort();
       const items=entities.map(id=>({id,name:this.catalog.find(x=>x.entity===id)?.name||saved.find(x=>x.entity===id)?.name||id}));
-      content=`<label class="field full"><span>Suchen</span><input type="search" data-lamp-search aria-label="${lamps?'Lichtentität suchen':'Sensor suchen'}"></label><div class="field full">${lamps?this.lightList(items,v.entities,'data-array="entities"'):`<div class="choices stack lamp-selection">${items.map(x=>`<label data-lamp-row="${lmEsc((x.id+' '+x.name).toLowerCase())}"><input type="checkbox" data-array="entities" value="${lmEsc(x.id)}" ${v.entities.includes(x.id)?'checked':''}><span class="entity-label" data-user-content><strong>${lmEsc(x.name)}</strong><small class="technical-id">${lmEsc(x.id)}</small></span></label>`).join('')||'<small>Noch keine passenden Einträge vorhanden.</small>'}</div>`}</div>`;
+      content='<div class="full">'+multiSelect({id:'lm-entity-selection',label:this.t(title),items:items.map(x=>({id:x.id,label:x.name,description:x.id})),values:v.entities,selectedFirst:lamps,action:'lm-entity-selection',searchLabel:this.t('Suchen'),disabled:this.busy})+'</div>';
     }else{
-      if(section==='lamps')content=`<div class="field full"><span>Licht-Entität</span><span data-user-content class="technical-id">${lmEsc(v.entity)}</span></div>`;
-      if(section==='sensors')content=`<div class="field full"><span>Sensor-Entität</span><span data-user-content class="technical-id">${lmEsc(v.entity)}</span></div>`;
+      if(section==='lamps')content=`<div class="field full"><span>Licht-Entität</span><span data-user-content class="hint">${lmEsc(v.entity)}</span></div>`;
+      if(section==='sensors')content=`<div class="field full"><span>Sensor-Entität</span><span data-user-content class="hint">${lmEsc(v.entity)}</span></div>`;
       content+=this.field('Anzeigename','name','text',{wide:section!=='lamps'});
       if(section==='lamps'){content+=this.select('Wenn keine Regel mehr gilt','fallback',[['off','Ausschalten'],['keep','Zustand beibehalten'],['restore','Vorherigen Zustand wiederherstellen']]);content+=`<div class="field"><span>Bereich</span>${this.user(this.lampAreaName(v.entity))}</div>`;}
       if(section==='sensors'){const record=this.catalog.find(s=>s.entity===v.entity)||{attributes:{}};if((!this.isLux(record)&&!['motion','occupancy','presence'].includes(record.attributes.device_class))||v.open_states){const binary=v.entity.startsWith('binary_sensor.');ed.contactInputs??={open_states:(v.open_states||(binary?['on']:[])).join(', '),closed_states:(v.closed_states||(binary?['off']:[])).join(', ')};content+=`<div class="field full"><span>Aktueller Zustand</span>${this.user(this._hass.states[v.entity]?.state||this.t('Nicht verfügbar'))}${Array.isArray(record.attributes.options)&&record.attributes.options.length?`<small><span>Mögliche Zustände</span>: ${this.user(record.attributes.options.join(', '))}</small>`:''}</div>`+[['open_states','Offen-Zustände'],['closed_states','Geschlossen-Zustände']].map(([key,label])=>`<label class="field"><span>${label}</span><input type="text" data-contact-states="${key}" value="${lmEsc(ed.contactInputs[key])}" autocomplete="off"><small>Mehrere Werte durch Komma trennen.</small></label>`).join('');}}
-      if(['rooms','zones'].includes(section))content+=`<div class="full target-choices"><details data-lamp-section="assignment" ${ed.lampSections.assignment?'open':''}><summary>Lampen <small data-assignment-count>${ed.lampIds.length} / ${this.config.lamps.length}</small></summary><div class="field">${this.lightList(this.config.lamps,ed.lampIds,'data-assign-light',false)}</div></details></div>`;
+      if(['rooms','zones'].includes(section))content+='<div class="full">'+multiSelect({id:'lm-assignment',label:this.t('Lampen'),items:this.config.lamps.map(x=>({id:x.id,label:x.name})),values:ed.lampIds,action:'lm-assignment',selectedFirst:true})+'</div>';
       if(section==='programs')content=this.programEditor();
     }
     return uiDialog({id:'lm-editor',title:picker?this.t(title):this.t(title+' bearbeiten'),content:`<div class="grid">${content}</div>`,closeLabel:this.t('Schließen'),actions:`${this.error?notice(this.message(this.error),{error:true}):''}${section==='programs'&&this.config.programs.some(p=>p.id===v.id)?this.removeBtn('programs',v.id):''}${this.btn('cancel',this.t('Abbrechen'))}${this.btn('commit',this.busy?this.t('Speichern …'):this.t('Speichern'),'','primary')}`}).replace('class="modal-body"','class="modal-body form"');
@@ -510,7 +357,7 @@ class LightManagerCard extends HTMLElement {
   }
   programTargetPicker(p){
     return `<div class="full"><h3>Lampen und Bereiche für alle Schaltaktionen</h3>
-      ${this.editor.mixedProgramTargets?`<div class="alert">${this.t('Dieses Programm hat bisher unterschiedliche Schaltziele. Bitte gemeinsame Ziele für alle Aktionen auswählen.')}</div>`:''}
+      ${this.editor.mixedProgramTargets?`<div class="fui-feedback warning">${this.t('Dieses Programm hat bisher unterschiedliche Schaltziele. Bitte gemeinsame Ziele für alle Aktionen auswählen.')}</div>`:''}
       ${this.targetChoices({id:p.id,targets:p.targets},'targets')}</div>`;
   }
   updateActionTargets(action,targets){
@@ -523,21 +370,19 @@ class LightManagerCard extends HTMLElement {
       if(range.valid)action.kelvin=Math.max(range.min,Math.min(range.max,action.kelvin));
     }
   }
-  programEditor(){const p=this.editor.value;if(p.once_date)return this.field('Name','name')+`<div class="field"><span>Einmalige Schaltung</span>${lmEsc(p.once_date)}</div>${this.programTargetPicker(p)}<div class="full">${p.actions.map((a,i)=>this.actionEditor(a,i,'time')).join('')}</div>`;return this.field('Name','name')+this.select('Programmtyp','kind',Object.entries(LM_KINDS),true)+
+  programEditor(){const p=this.editor.value;if(p.once_date)return this.field('Name','name')+`<div class="field">${uiField({id:'lm-once-date',label:this.t('Einmalige Schaltung'),type:'date',value:p.once_date,disabled:true})}</div>${this.programTargetPicker(p)}<div class="full">${p.actions.map((a,i)=>this.actionEditor(a,i,'time')).join('')}</div>`;return this.field('Name','name')+this.select('Programmtyp','kind',Object.entries(LM_KINDS),true)+
     this.check('Programm aktiv','enabled')+this.check('Im Urlaub aussetzen','pause_in_vacation')+
     this.choices('Wochentage','days',LM_DAYS.map((name,id)=>({id,name})))+
-    (p.kind==='time'?'':this.field('Gültig ab','start','time')+this.field('Gültig bis','end','time',{help:'Gleiche Uhrzeit = ganztägig.'}))+
+    (p.kind==='time'?'':'<div class="full">'+timeWindow({id:'lm-window',label:this.t('Zeitfenster'),start:p.start,end:p.end,action:'lm-window',startLabel:this.t('Gültig ab'),endLabel:this.t('Gültig bis')})+'</div>')+
     this.programTargetPicker(p)+
-    `<div class="full season-box"><label class="switch"><input type="checkbox" data-path="season_enabled" data-redraw ${p.season_enabled?'checked':''}><span>Saison einschränken</span></label>${p.season_enabled?`<div class="season-dates">${this.seasonField('Von','season_from')}${this.seasonField('Bis','season_to')}</div>`:''}</div>
-    <div class="full"><div class="toolbar"><h3 class="actions-heading">Schaltaktionen</h3>${p.actions.length>1?this.btn('expand-actions','Alle aufklappen')+this.btn('collapse-actions','Alle zuklappen'):''}</div>${p.actions.map((a,i)=>this.actionEditor(a,i,p.kind)).join('')}${this.btn('add-action','+ Schaltaktion hinzufügen')}</div>`;
+    '<div class="full">'+seasonPicker({id:'lm-season',label:this.t('Saison'),enabled:p.season_enabled,start:this.editor.seasonInputs?.season_from??p.season_from,end:this.editor.seasonInputs?.season_to??p.season_to,action:'lm-season'})+'</div>'+`
+
+    <div class="full"><div class="toolbar"><h3>Schaltaktionen</h3>${p.actions.length>1?this.btn('expand-actions','Alle aufklappen')+this.btn('collapse-actions','Alle zuklappen'):''}</div>${p.actions.map((a,i)=>this.actionEditor(a,i,p.kind)).join('')}${this.btn('add-action','+ Schaltaktion hinzufügen')}</div>`;
   }
-  seasonField(label,key){this.editor.seasonInputs??={};const stored=this.editor.value[key]||'',value=this.editor.seasonInputs[key]??(stored?stored.slice(3,5)+'.'+stored.slice(0,2):'');
-    return `<label class="field"><span>${label}</span><input type="text" data-season="${key}" value="${lmEsc(value)}" placeholder="TT.MM." maxlength="5" inputmode="decimal" aria-label="${label} (TT.MM.)"></label>`;}
   parseSeason(value){const match=String(value).match(/^(\d{2})\.(\d{2})\.?$/);if(!match)throw Error(this.t('Saison bitte als TT.MM. eingeben.'));
     const day=Number(match[1]),month=Number(match[2]),d=new Date(Date.UTC(2000,month-1,day));if(d.getUTCMonth()!==month-1||d.getUTCDate()!==day)throw Error(this.t('Ungültiges Saisondatum.'));
     return match[2]+'-'+match[1];}
-  brightnessControl(a,i){return `<div class="field brightness-control"><span>Helligkeit</span><label class="switch"><input type="checkbox" data-brightness-keep="${i}" ${a.brightness==null?'checked':''}><span>Letzte Einstellung</span></label><div class="brightness-row"><input type="range" data-brightness="${i}" min="1" max="100" step="1" value="${a.brightness??100}" ${a.brightness==null?'disabled':''} aria-label="Helligkeit in Prozent"><output data-brightness-value="${i}">${a.brightness==null?'—':a.brightness+' %'}</output></div></div>`;}
-
+  brightnessControl(a,i){return rangeControl({id:'lm-brightness-'+i,label:this.t('Helligkeit'),value:a.brightness,min:1,max:100,allowKeep:true,keepLabel:this.t('Letzte Einstellung'),action:'lm-brightness',disabled:this.busy}).replace('data-ui-range',`data-ui-range data-lm-index="${i}"`);}
   sceneMatches(lamp,entity){const prefix='scene.'+lamp.entity.slice('light.'.length)+'_';return entity.startsWith(prefix)&&entity.length>prefix.length;}
   sceneName(entity,lamp=null){
     const raw=this.catalog.find(x=>x.entity===entity)?.name||this._hass.states[entity]?.attributes?.friendly_name||entity||this.t('Bitte wählen');
@@ -571,22 +416,11 @@ class LightManagerCard extends HTMLElement {
   }
   availableScenes(a){const lamps=this.actionLampIds(a).map(id=>this.config.lamps.find(l=>l.id===id));return lamps.length?this.catalog.filter(s=>s.entity.startsWith('scene.')&&lamps.every(l=>this.sceneMatches(l,s.entity))).map(s=>({id:s.entity,name:this.sceneName(s.entity)})).sort((a,b)=>a.name.localeCompare(b.name)):[];}
   colourMode(a){if(a.mode==='scene')return 'scene';return a.kelvin!=null?'white':a.rgb?'color':'last';}
-  targetChoices(a,path){
-    const groups=this.lampAreaGroups(a);
-    return `<div class="full target-choices">${groups.map(group=>{
-      const key=a.id+':'+group.id;
-      const items=group.id?[{id:group.id,name:group.lamps.length?this.t('Ganzer Bereich'):group.name},...group.lamps]:group.lamps;
-      const chosen=items.filter(item=>a.targets.includes(item.id)).length;
-      return `<details data-target-group="${lmEsc(key)}" ${this.editor.targetGroups?.[key]?'open':''}><summary><span data-user-content>${lmEsc(group.name)}</span> <small>${chosen} / ${items.length}</small></summary>${this.choices('',path,items)}</details>`;
-    }).join('')||this.t('Keine Einträge.')}</div>`;
-  }
-  wheelHSV(rgb){const [r,g,b]=rgb.map(v=>v/255),max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;let h=0;if(d)h=(max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4)*60;return {h,s:max?d/max:0};}
-  wheelRGB(h,s){const c=s,x=c*(1-Math.abs((h/60)%2-1)),m=1-c,parts=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];return parts.map(v=>Math.round((v+m)*255));}
-  wheelHex(rgb){return '#'+rgb.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');}
-  colourWheel(a,i){const {h,s}=this.wheelHSV(a.rgb),angle=h*Math.PI/180,hex=this.wheelHex(a.rgb);return `<div class="field full colour-control"><span>Farbe</span><div class="colour-wheel" data-wheel="${i}" tabindex="0" role="group" aria-label="${this.t('Farbkreis: Pfeiltasten zum Wählen, Pos1 für Weiß.')}" aria-describedby="wheel-value-${i}"><span class="colour-marker" style="left:${50+Math.sin(angle)*s*50}%;top:${50-Math.cos(angle)*s*50}%;background:${hex}"></span></div><div class="colour-preview"><span data-colour-swatch="${i}" style="background:${hex}"></span><output data-user-content id="wheel-value-${i}" data-colour-value="${i}" aria-live="polite">${hex.toUpperCase()}</output></div></div>`;}
-  setWheel(wheel,x,y){const radius=Math.hypot(x,y);if(radius>1){x/=radius;y/=radius;}const h=(Math.atan2(x,-y)*180/Math.PI+360)%360,s=Math.min(1,radius),i=Number(wheel.dataset.wheel),rgb=this.wheelRGB(h,s),hex=this.wheelHex(rgb);this.editor.value.actions[i].rgb=rgb;const marker=wheel.querySelector('.colour-marker');Object.assign(marker.style,{left:(50+x*50)+'%',top:(50+y*50)+'%',background:hex});this.shadowRoot.querySelector(`[data-colour-swatch="${i}"]`).style.background=hex;this.shadowRoot.querySelector(`[data-colour-value="${i}"]`).textContent=hex.toUpperCase();}
-  wheelPointer(e){const wheel=e.target.closest?.('[data-wheel]');if(!wheel||!this.editor||this.busy||e.isPrimary===false||(e.type==='pointerdown'&&e.button!==0))return;if(e.type==='pointerdown'){wheel.setPointerCapture(e.pointerId);wheel.focus({preventScroll:true});}e.preventDefault();const r=wheel.getBoundingClientRect();this.setWheel(wheel,(e.clientX-r.left-r.width/2)/(r.width/2),(e.clientY-r.top-r.height/2)/(r.height/2));}
-  wheelKey(e){const wheel=e.target.closest?.('[data-wheel]');if(!wheel||!this.editor||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;e.preventDefault();const {h,s}=this.wheelHSV(this.editor.value.actions[Number(wheel.dataset.wheel)].rgb),a=h*Math.PI/180,step=e.shiftKey?.1:.02;let x=Math.sin(a)*s,y=-Math.cos(a)*s;if(e.key==='Home'){x=0;y=0;}else if(e.key==='End'){x=Math.sin(a);y=-Math.cos(a);}else if(e.key==='ArrowLeft')x-=step;else if(e.key==='ArrowRight')x+=step;else if(e.key==='ArrowUp')y-=step;else y+=step;this.setWheel(wheel,x,y);}
+  targetChoices(a,path){return '<div class="full">'+this.lampAreaGroups(a).map(group=>{
+    const key=a.id+':'+group.id,items=group.id?[{id:group.id,name:group.lamps.length?this.t('Ganzer Bereich'):group.name},...group.lamps]:group.lamps;
+    return uiSection({id:'lm-target-'+a.id+'-'+(group.id||'none'),title:group.name,expanded:!!this.editor.targetGroups?.[key],content:this.choices('',path,items,group.id||'none')}).replace('data-ui="collapse"',`data-ui="collapse" data-lm-target="${lmEsc(key)}"`);
+  }).join('')+'</div>';}
+  colourWheel(a,i){return '<div class="full">'+colourPicker({id:'lm-colour-'+i,label:this.t('Farbe'),value:a.rgb,action:'lm-colour',disabled:this.busy}).replace('data-ui-colour',`data-ui-colour data-lm-index="${i}"`)+'</div>';}
   actionLampIds(a){const ids=new Set();for(const id of a.targets||[]){if(id.startsWith('area:'))this.config.lamps.filter(l=>this.data.lamp_areas?.[l.entity]===id).forEach(l=>ids.add(l.id));if(this.config.lamps.some(l=>l.id===id))ids.add(id);for(const section of ['rooms','zones'])if(this.config[section].some(v=>v.id===id))this.config.lamps.filter(l=>(l[section]||[]).includes(id)).forEach(l=>ids.add(l.id));}return [...ids];}
   actionEntities(a){const result=new Set();const walk=(entity,seen=new Set())=>{if(seen.has(entity))return;const l=this.config.lamps.find(l=>l.entity===entity),attrs=this.catalog.find(x=>x.entity===entity)?.attributes||this._hass.states[entity]?.attributes||{};let native=attrs.entity_id||[];if(typeof native==='string')native=[native];const members=Array.isArray(native)&&native.length?native:l?.members;if(Array.isArray(members)&&members.length)members.filter(x=>x.startsWith('light.')).forEach(x=>walk(x,new Set([...seen,entity])));else result.add(entity);};this.actionLampIds(a).forEach(id=>walk(this.config.lamps.find(l=>l.id===id).entity));return [...result];}
   emptyTargetReason(a){if(!(a.targets||[]).length)return this.t('Zuerst Bereiche oder Lampen auswählen.');if(a.targets.some(id=>id.startsWith('area:')))return this.t('Die Auswahl enthält keine Lampen.');const rooms=this.config.rooms.some(r=>a.targets.includes(r.id)),zones=this.config.zones.some(z=>a.targets.includes(z.id));return rooms&&zones?'Den ausgewählten Zonen und Zimmern sind keine Lampen zugeordnet.':rooms?'Dem ausgewählten Zimmer sind keine Lampen zugeordnet.':zones?'Der ausgewählten Zone sind keine Lampen zugeordnet.':'Die Auswahl enthält keine Lampen.';}
@@ -598,14 +432,15 @@ class LightManagerCard extends HTMLElement {
       if(!Number.isFinite(low)||!Number.isFinite(high)||low>high)return {min:2000,max:6500,valid:false,reason:'Kein gültiger Kelvin-Bereich verfügbar.'};
       min=Math.max(min,Math.ceil(low));max=Math.min(max,Math.floor(high));}
     return min<=max?{min,max,valid:true}:{min:2000,max:6500,valid:false,reason:'Die Auswahl unterstützt keine gemeinsamen Weißtöne.'};}
-  whiteControl(a,i){const r=this.whiteRange(a),within=r.valid&&a.kelvin>=r.min&&a.kelvin<=r.max;
-    return `<div class="field full white-control"><span>Weißtöne</span><div class="white-labels"><span>Kaltweiß</span><output data-white-value="${i}">${a.kelvin} K</output><span>Warmweiß</span></div><input type="range" data-white="${i}" data-max-kelvin="${r.max}" data-min-kelvin="${r.min}" min="0" max="${r.max-r.min}" step="1" value="${r.max-Math.max(r.min,Math.min(r.max,a.kelvin))}" ${r.valid?'':'disabled'} aria-label="Weißtöne von Kaltweiß nach Warmweiß"><div class="white-labels muted"><span>${r.max} K</span><span>${r.min} K</span></div>${!r.valid?`<small>${this.t(r.reason)}</small>`:!within?'<small>Gespeicherter Weißton liegt außerhalb des Lampenbereichs. Regler neu einstellen.</small>':''}</div>`;}
+  whiteControl(a,i){const r=this.whiteRange(a),value=Math.max(r.min,Math.min(r.max,a.kelvin));
+    return '<div class="full">'+(r.min===r.max?uiField({id:'lm-white-'+i,label:this.t('Weißtöne'),type:'number',value:r.min,disabled:true}):whiteTemperatureControl({id:'lm-white-'+i,label:this.t('Weißtöne'),value,min:r.min,max:r.max,disabled:!r.valid||this.busy,action:'lm-temperature',coldLabel:this.t('Kaltweiß'),warmLabel:this.t('Warmweiß')}).replace('data-ui-range',`data-ui-range data-lm-index="${i}"`))+(!r.valid?feedback(this.t(r.reason),{kind:'warning'}):'')+'</div>';
+  }
   actionEditor(a,i,kind){const q='actions.'+i+'.',available=this.selectedSensors(),bins=available.filter(x=>x.entity.startsWith('binary_sensor.')||(kind==='contact'&&(!this.isLux(x)||x.open_states)));
     let body=this.field('Name der Schaltaktion',q+'name','text',{wide:true})+this.select('Lichtaktion',q+'mode',[['on','Einschalten / Lichtwerte'],['off','Ausschalten']],true);
     if(a.mode==='on'||a.mode==='scene'){
       const color=this.colourMode(a);
       if(a.mode==='on')body+=this.brightnessControl(a,i);
-      body+=`<label class="field"><span>Farbe</span><select data-colormode="${i}"><option value="last" ${color==='last'?'selected':''}>Letzte Einstellung</option><option value="white" ${color==='white'?'selected':''}>Weißtöne</option><option value="color" ${color==='color'?'selected':''}>Farbe</option>${this.availableScenes(a).length?`<optgroup label="Hue-Szenen">${this.availableScenes(a).map(s=>`<option data-user-content value="${lmEsc(s.id)}" ${a.scene===s.id&&a.mode==='scene'?'selected':''}>${lmEsc(s.name)}</option>`).join('')}</optgroup>`:''}</select></label>`;
+      body+=selectField({id:'lm-colormode-'+i,label:this.t('Farbe'),value:a.mode==='scene'?a.scene:color,options:[{value:'last',label:this.t('Letzte Einstellung')},{value:'white',label:this.t('Weißtöne')},{value:'color',label:this.t('Farbe')},...(this.availableScenes(a).length?[{label:this.t('Hue-Szenen'),options:this.availableScenes(a).map(scene=>({value:scene.id,label:scene.name}))}]:[])]}).replace('<select ',`<select data-colormode="${i}" `).replaceAll('<option value="scene.','<option data-user-content value="scene.');
       if(a.mode==='scene'&&!this.availableScenes(a).some(s=>s.id===a.scene))body+='<small class="full">Hue-Szene passt nicht zur Auswahl. Bitte neu wählen.</small>';
       if(color==='white')body+=this.whiteControl(a,i);
       if(color==='color')body+=this.colourWheel(a,i);
@@ -617,7 +452,7 @@ class LightManagerCard extends HTMLElement {
       const timeField = a.event === 'fixed'
         ? this.field('Uhrzeit', q+'time', 'time')
         : this.field('Versatz (Minuten)', q+'offset', 'number', {min:-720,max:720});
-      body += '<div class="full schedule-fields">'
+      body += '<div class="full grid">'
         + this.select('Auslöser', q+'event', triggers, true)
         + timeField
         + this.field('Frühestens', q+'earliest', 'time')
@@ -638,15 +473,15 @@ class LightManagerCard extends HTMLElement {
       body+=this.select('Bei Programmende',q+'end_action',[['restore','Ursprünglichen Zustand wiederherstellen'],['off','Ausschalten'],['keep','Zustand beibehalten'],['fallback','Lampeneinstellung verwenden']]);
     }
     const folded=this.editor.collapsed?.has(a.id);
-    return `<div class="editor-action"><div class="editor-action-head">${this.btn('fold-action',this.chevron(!folded)+`<span class="action-fold-text"><strong>${a.name?.trim()?this.user(a.name.trim()):this.t('Schaltaktion')+' '+(i+1)}</strong><small>${this.user(this.targetNames(a))} · ${lmEsc(this.actionText(a))}</small></span>`,`data-id="${lmEsc(a.id)}" aria-expanded="${!folded}"`,'action-fold')}<div class="list-tools">${this.toggle(a.enabled,'Schaltaktion '+(i+1)+' aktivieren',`data-path="${q}enabled"`)}${this.btn('copy-action',this.icon('copy'),`data-index="${i}" title="Aktion kopieren" aria-label="Aktion kopieren"`,'icon')}${this.btn('remove-action',this.icon('delete'),`data-index="${i}" title="Aktion entfernen" aria-label="Aktion entfernen"`,'icon danger')}</div></div>${folded?'':`<div class="editor-action-body grid">${body}</div>`}</div>`;
+    return uiActionEditor({id:'lm-action-'+a.id,title:a.name?.trim()||this.t('Schaltaktion')+' '+(i+1),summary:this.targetNames(a)+' · '+this.actionText(a),expanded:!folded,content:'<div class="grid">'+body+'</div>',actions:this.toggle(a.enabled,'Schaltaktion '+(i+1)+' aktivieren',`data-path="${q}enabled"`)+this.btn('copy-action',this.icon('copy'),`data-index="${i}" title="Aktion kopieren" aria-label="Aktion kopieren"`,'icon')+this.btn('remove-action',this.icon('delete'),`data-index="${i}" title="Aktion entfernen" aria-label="Aktion entfernen"`,'icon danger')}).replace('data-ui="collapse"',`data-ui="collapse" data-lm-editor-action="${lmEsc(a.id)}"`);
   }
   guide(){
     if(this.language()==='en')return `
       <h3>Settings</h3>
-      <p>Use <b>Select lights</b> and <b>Select sensors</b> to add Home Assistant entities. The pickers show names and entity IDs. Lights are grouped by their Home Assistant area. Use the arrows to reorder areas. Lights within an area are alphabetical. The sensor list shows current readings or states. For opening contacts with custom states, enter the exact open and closed values, separated by commas.</p>
+      <p>Use <b>Select lights</b> and <b>Select sensors</b> to add Home Assistant entities. The shared pickers provide search, selection counts and Select all/Clear controls. They show names and entity IDs. Lights are grouped by their Home Assistant area. Use the arrows to reorder areas. Lights within an area are alphabetical. The sensor list shows current readings or states. For opening contacts with custom states, enter the exact open and closed values, separated by commas.</p>
       <h3>Programs</h3>
       <p>Time and sensor programs are grouped under larger headings that line up with program names and can be expanded or collapsed. Vacation mode is available in Settings. Group counts are aligned to the right. Program groups, rows and actions use the shared UI Kit layout, typography and controls without local style overrides. Each compact entry shows the weekdays and, for sensor programs, the validity window. On wider screens, use the arrows to reorder programs within each group, or use the copy icon to create an initially disabled copy. Mobile screens show only the enable switch and edit button. Select lights and areas once per program. The selection applies to all its actions. When editing an older program with mixed targets, choose shared targets before saving.</p>
-      <p>Actions can have names and can be expanded or collapsed together in the editor. Set the weekdays and, if needed, enable the season restriction and enter dates as DD.MM. The browser remembers program, group and readings-panel expansion for each user.</p>
+      <p>Actions can have names and can be expanded or collapsed together in the editor. Set the weekdays and, if needed, enable the season restriction and enter dates as DD.MM. Lighting controls use the shared brightness, Kelvin and color components. The browser remembers program, group and readings-panel expansion for each user.</p>
       <h3>Time program</h3>
       <p>Actions can use a fixed time, sunrise or sunset. Solar actions support an offset. The calculated switching time respects the earliest and latest times. The daily schedule hides past recurring times. Use <b>Skip</b> to omit an upcoming action for today. Use <b>+ Additional action</b> to schedule a one-time action for later today.</p>
       <h3>Sensor programs</h3>
@@ -656,14 +491,14 @@ class LightManagerCard extends HTMLElement {
       <p>When switching on, set brightness and choose the last color setting, white temperature, a color or an eligible Hue scene. A Hue scene is offered when its entity ID matches the technical light name followed by an underscore for every selected light entity.</p>
       <p>Opening contacts have priority over motion, then illuminance, then time programs. Within the same sensor priority, the higher program wins. For time programs the latest due action takes precedence. At the same time, a one-time action takes precedence over a recurring one, then list order decides.</p>
       <h3>Readings and backups</h3>
-      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. Use + Program to create a program. The light-blue sorting arrows ↑ and ↓ and + Program come directly from the shared UI Kit. All controls use the locally bundled HA UI Kit 1.2.1. The compact Programs tab and the clock and sensor icons use the same mobile arrangement as Shutter Manager. Light status can be expanded directly in Settings using its heading. Settings also contains backup and restore, vacation mode, and the DE/EN language selector.</p>`;
+      <p>The Readings panel under Programs shows sunrise, sunset and sensors used in programs. Sensor programs has its own collapsible Readings panel for sensor values. Settings includes a collapsible daily switching history with light names, command details and results. Completed means that Home Assistant accepted the service call. The history is retained across restarts and resets at midnight in the Home Assistant time zone. Use + Program to create a program. The light-blue sorting arrows ↑ and ↓ and + Program come directly from the shared UI Kit. All controls use the locally bundled HA UI Kit 1.2.2. The compact Programs tab and the clock and sensor icons use the same mobile arrangement as Shutter Manager. Light status can be expanded directly in Settings using its heading. Settings also contains backup and restore, vacation mode, and the DE/EN language selector.</p>`;
     return `
       <h3>Einstellungen</h3>
-      <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die Auswahldialoge zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
+      <p>Über <b>Lampen auswählen</b> und <b>Sensoren auswählen</b> fügst du Entitäten aus Home Assistant hinzu. Die gemeinsamen Auswahldialoge bieten Suche, Auswahlzähler sowie Alle/Keine und zeigen Name und Entitäts-ID. Lampen sind nach HA-Bereich gruppiert. Die Bereiche lassen sich mit den Pfeilen sortieren, die Lampen darin stehen alphabetisch. Bei Sensoren steht der aktuelle Messwert oder Zustand neben dem Namen. Bei Öffnungskontakten mit eigenen Zustandswerten gibst du die exakten Offen- und Geschlossen-Werte kommagetrennt ein.</p>
       <h3>Programme</h3>
       <p>Die größeren Überschriften für Zeitprogramme und Sensorprogramme sind linksbündig mit den Programmnamen und lassen sich auf- und zuklappen.</p>
       <p>Zeit- und Sensorprogramme stehen in getrennten Gruppen. Den Urlaubsmodus findest du in den Einstellungen. Die Anzahl der Programme steht rechtsbündig in der Gruppenüberschrift. Programmgruppen, Programmzeilen und Schaltaktionen verwenden Layout, Schrift und Bedienelemente des UI Kit ohne lokale Stilüberschreibungen. Jeder kompakte Eintrag zeigt die Wochentage und bei Sensorprogrammen das Gültigkeitsfenster. Auf breiten Bildschirmen änderst du mit den Pfeilen die Reihenfolge innerhalb der Gruppe. Das Kopiersymbol erstellt eine zunächst deaktivierte Kopie. Mobil werden nur der Aktivschalter und das Bearbeiten-Symbol angezeigt. Wähle Lampen und Bereiche einmal für das gesamte Programm. Die Auswahl gilt für alle Schaltaktionen. Haben Aktionen eines älteren Programms unterschiedliche Ziele, wähle beim Bearbeiten gemeinsame Ziele, bevor du speicherst.</p>
-      <p>Schaltaktionen können eigene Namen haben und im Editor gemeinsam auf- oder zugeklappt werden. Wähle die Wochentage und bei Bedarf <b>Saison einschränken</b>. Die Saisonfelder verwenden TT.MM. Der Browser merkt sich je Benutzer den Aufklappzustand der Programmgruppen, Programme und Messwerte.</p>
+      <p>Schaltaktionen können eigene Namen haben und im Editor gemeinsam auf- oder zugeklappt werden. Wähle die Wochentage und bei Bedarf <b>Saison einschränken</b>. Die Saisonfelder verwenden TT.MM. Helligkeit, Kelvin und Farbe verwenden die gemeinsamen Regler. Der Browser merkt sich je Benutzer den Aufklappzustand der Programmgruppen, Programme und Messwerte.</p>
       <h3>Zeitprogramm</h3>
       <p>Als Auslöser stehen Uhrzeit, Sonnenaufgang und Sonnenuntergang zur Wahl. Bei Sonnenzeiten kannst du einen Versatz einstellen. Die berechnete Schaltzeit berücksichtigt <b>Frühestens</b> und <b>Spätestens</b>. Die Tagesübersicht blendet vergangene wiederkehrende Schaltzeiten aus. Mit <b>Auslassen</b> überspringst du eine bevorstehende Aktion für heute. Über <b>+ Zusätzliche Aktion</b> planst du eine einmalige Schaltung für später am selben Tag.</p>
       <h3>Sensorprogramme</h3>
@@ -673,10 +508,10 @@ class LightManagerCard extends HTMLElement {
       <p>Beim Einschalten kannst du Helligkeit und Farbe einstellen. Zur Wahl stehen die letzte Einstellung, Weißtöne, eine Farbe oder eine passende Hue-Szene. Eine Szene wird angeboten, wenn ihre Entitäts-ID für jede gewählte Lichtentität zum technischen Lampennamen mit anschließendem Unterstrich passt.</p>
       <p>Öffnungskontakte haben Vorrang vor Bewegung, dann folgen Helligkeit und Zeitprogramme. Bei gleichem Sensorvorrang gewinnt das weiter oben gespeicherte Programm. Bei Zeitprogrammen zählt die jüngste fällige Aktion. Bei gleicher Uhrzeit hat die Einmalaktion Vorrang vor der wiederkehrenden Aktion, danach entscheidet die Listenreihenfolge.</p>
       <h3>Messwerte und Sicherung</h3>
-      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Über + Programm legst du ein Programm an. Die hellblauen Sortierpfeile ↑ und ↓ und + Programm kommen direkt aus dem gemeinsamen UI Kit. Alle Bedienelemente verwenden den lokal mitgelieferten HA UI Kit 1.2.1. Der kompakte Tab Programme und die Uhr- und Sensorsymbole sind mobil wie im Shutter Manager angeordnet. Lampenstatus lässt sich direkt in den Einstellungen über die Überschrift aufklappen. Dort findest du auch Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
+      <p>Die Messwerte unter <b>Programme</b> zeigen Sonnenaufgang, Sonnenuntergang und die in Programmen verwendeten Sensoren. Auch unter <b>Sensorprogramme</b> kannst du die Sensormesswerte separat einblenden. In den Einstellungen zeigt „Heutige Schaltungen“ aufklappbar Lampennamen, Befehle und Ergebnisse. Erfolgreich bedeutet, dass Home Assistant den Dienstaufruf angenommen hat. Die Historie bleibt nach Neustarts erhalten und beginnt um Mitternacht in der Home-Assistant-Zeitzone neu. Über + Programm legst du ein Programm an. Die hellblauen Sortierpfeile ↑ und ↓ und + Programm kommen direkt aus dem gemeinsamen UI Kit. Alle Bedienelemente verwenden den lokal mitgelieferten HA UI Kit 1.2.2. Der kompakte Tab Programme und die Uhr- und Sensorsymbole sind mobil wie im Shutter Manager angeordnet. Lampenstatus lässt sich direkt in den Einstellungen über die Überschrift aufklappen. Dort findest du auch Sicherung und Wiederherstellung, den Urlaubsmodus und die Sprachwahl DE/EN.</p>`;
   }
   setPath(path,value){const keys=path.split('.');let obj=this.editor.value;for(const k of keys.slice(0,-1))obj=obj[k];obj[keys.at(-1)]=value;}
-  input(e){const t=e.target;if(this.editor&&t.dataset.contactStates){this.editor.contactInputs[t.dataset.contactStates]=t.value;return;}if(t.hasAttribute('data-lamp-search')){for(const list of this.shadowRoot.querySelectorAll('.lamp-selection'))this.filterLightRows(list);return;}if(this.editor&&t.dataset.season){this.editor.seasonInputs??={};this.editor.seasonInputs[t.dataset.season]=t.value;return;}if(this.editor&&t.hasAttribute('data-brightness')){const i=Number(t.dataset.brightness);this.editor.value.actions[i].brightness=Number(t.value);this.shadowRoot.querySelector(`[data-brightness-value="${i}"]`).textContent=t.value+' %';return;}if(this.editor&&t.hasAttribute('data-white')){const i=Number(t.dataset.white),a=this.editor.value.actions[i];a.kelvin=Number(t.dataset.maxKelvin)-Number(t.value);const out=this.shadowRoot.querySelector(`[data-white-value="${i}"]`);if(out)out.textContent=a.kelvin+' K';return;}if(!this.editor||!t.dataset.path||t.type==='checkbox'||t.tagName==='SELECT')return;
+  input(e){const t=e.target;if(this.editor&&t.dataset.contactStates){this.editor.contactInputs[t.dataset.contactStates]=t.value;return;}if(!this.editor||!t.dataset.path||t.type==='checkbox'||t.tagName==='SELECT')return;
     this.setPath(t.dataset.path,t.type==='number'?(t.value===''?null:Number(t.value)):t.value);}
   async change(e){const t=e.target;
     if(t.dataset.actionToggle){const c=lmClone(this.config),p=c.programs.find(p=>p.id===t.dataset.program),a=p.actions.find(a=>a.id===t.dataset.actionToggle);a.enabled=t.checked;await this.save(c);this.render();return;}
@@ -684,12 +519,10 @@ class LightManagerCard extends HTMLElement {
     if(t.hasAttribute('data-vacation')){const c=lmClone(this.config);c.vacation=t.checked;await this.save(c);this.render();return;}
     if(t.id==='lm-backup'){const f=t.files[0];if(!f)return;try{if(f.size>2000000)throw Error(this.t('Sicherung zu groß (maximal 2 MB).'));
       const parsed=JSON.parse(await f.text()),c=parsed.config||parsed;
-      if(!confirm(this.t('Gesamte Light-Manager-Konfiguration durch diese Sicherung ersetzen? Aktive Programme werden sofort neu bewertet.')))return;
+      if(!await this.confirmUI(this.t('Gesamte Light-Manager-Konfiguration durch diese Sicherung ersetzen? Aktive Programme werden sofort neu bewertet.')))return;
       await this.save(c);this.render();}catch(err){this.error=err.message;this.render();}return;}
     if(!this.editor)return;
-    if(t.hasAttribute('data-brightness-keep')){const a=this.editor.value.actions[Number(t.dataset.brightnessKeep)];a.brightness=t.checked?null:100;this.render();return;}
-    if(t.hasAttribute('data-assign-light')){this.error='';this.editor.lampIds=t.checked?[...new Set([...this.editor.lampIds,t.value])]:this.editor.lampIds.filter(id=>id!==t.value);this.shadowRoot.querySelector('[data-assignment-count]').textContent=this.editor.lampIds.length+' / '+this.config.lamps.length;this.updateLightList(t.closest('[data-light-list]'));return;}
-    if(t.dataset.array){this.error='';const v=lmClone(this.value(t.dataset.array)||[]),value=t.dataset.array==='days'?Number(t.value):t.value;this.setPath(t.dataset.array,t.checked?[...new Set([...v,value])]:v.filter(x=>x!==value));if(t.dataset.array==='entities'&&this.editor.section==='lamp_selection')this.updateLightList(t.closest('[data-light-list]'));const count=this.shadowRoot.querySelector(`[data-lamp-count="${t.dataset.array}"]`);if(count)count.textContent=(this.value(t.dataset.array)||[]).length+' / '+this.shadowRoot.querySelectorAll(`[data-array="${t.dataset.array}"]`).length;if(t.dataset.array==='targets'){
+    if(t.dataset.array){this.error='';const v=lmClone(this.value(t.dataset.array)||[]),value=t.dataset.array==='days'?Number(t.value):t.value;this.setPath(t.dataset.array,t.checked?[...new Set([...v,value])]:v.filter(x=>x!==value));const count=this.shadowRoot.querySelector(`[data-lamp-count="${t.dataset.array}"]`);if(count)count.textContent=(this.value(t.dataset.array)||[]).length+' / '+this.shadowRoot.querySelectorAll(`[data-array="${t.dataset.array}"]`).length;if(t.dataset.array==='targets'){
       for(const action of this.editor.value.actions)this.updateActionTargets(action,this.editor.value.targets);
       this.editor.mixedProgramTargets=false;
       this.render();
@@ -721,6 +554,10 @@ class LightManagerCard extends HTMLElement {
   async click(e){
     const fold=e.target.closest('[data-ui="collapse"]');
     if(fold){
+      if(fold.hasAttribute('data-lm-overview')){if(this.tab==='sensors')this.sensorOverviewOpen=fold.getAttribute('aria-expanded')!=='true';else this.overviewOpen=fold.getAttribute('aria-expanded')!=='true';this.saveProgramFolds();return;}
+      if(fold.dataset.lmMember){const key=fold.dataset.lmMember;fold.getAttribute('aria-expanded')==='true'?this.memberListsOpen.delete(key):this.memberListsOpen.add(key);return;}
+      if(this.editor&&fold.dataset.lmTarget){this.editor.targetGroups??={};this.editor.targetGroups[fold.dataset.lmTarget]=fold.getAttribute('aria-expanded')!=='true';return;}
+      if(this.editor&&fold.dataset.lmEditorAction){this.editor.collapsed??=new Set();fold.getAttribute('aria-expanded')==='true'?this.editor.collapsed.add(fold.dataset.lmEditorAction):this.editor.collapsed.delete(fold.dataset.lmEditorAction);return;}
       if(fold.dataset.programGroup){
         this.collapsedProgramGroups??=new Set();
         fold.getAttribute('aria-expanded')==='true'?this.collapsedProgramGroups.add(fold.dataset.programGroup):this.collapsedProgramGroups.delete(fold.dataset.programGroup);
@@ -803,7 +640,13 @@ class LightManagerCard extends HTMLElement {
     else if(op==='export'){const blob=new Blob([JSON.stringify({product:'Light Manager',version:LM_VERSION,config:this.config},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Light-Manager-Sicherung-'+this.data.today+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
     else if(op==='import')this.shadowRoot.getElementById('lm-backup').click();
   }
-  async remove(section,id){const lamp=section==='lamps';const once=section==='programs'&&this.config.programs.find(p=>p.id===id)?.once_date;if(!confirm(this.t(lamp?'Lampe aus Light Manager entfernen?':once?'Einmalige Schaltung löschen?':'Eintrag löschen? Verwendete Schaltziele müssen zuvor aus Programmen entfernt werden.')))return;
+  async confirmUI(message){
+    this.confirming=true;const host=document.createElement('div');
+    host.innerHTML=confirmDialog({id:'lm-confirm',title:this.t('Bitte bestätigen'),message,confirmLabel:this.t('Bestätigen'),cancelLabel:this.t('Abbrechen'),confirmAction:'lm-confirm-yes'});
+    this.shadowRoot.append(host);const dialog=host.querySelector('dialog');
+    return new Promise(resolve=>{let accepted=false;host.addEventListener('click',e=>{if(e.target.closest('[data-action="lm-confirm-yes"]')){accepted=true;dialog.close();}});dialog.addEventListener('close',()=>{host.remove();this.confirming=false;resolve(accepted);},{once:true});dialog.showModal();});
+  }
+  async remove(section,id){const lamp=section==='lamps';const once=section==='programs'&&this.config.programs.find(p=>p.id===id)?.once_date;if(!await this.confirmUI(this.t(lamp?'Lampe aus Light Manager entfernen?':once?'Einmalige Schaltung löschen?':'Eintrag löschen? Verwendete Schaltziele müssen zuvor aus Programmen entfernt werden.')))return;
     const c=lmClone(this.config);c[section]=c[section].filter(v=>v.id!==id);
     if(section==='rooms'||section==='zones')for(const l of c.lamps)l[section]=l[section].filter(v=>v!==id);
     if(await this.save(c,this.editor?.revision??this.data.revision)){this.editor=null;this.error='';}this.render();}

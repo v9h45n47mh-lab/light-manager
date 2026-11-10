@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.5
+
+- Update to locally bundled HA UI Kit 1.2.2 with aligned program names and metadata.
+- Replace custom entity selection, weekday/season/time controls, brightness/Kelvin/color controls, action editors, readings, history, settings and daily agendas with shared components.
+- Remove all local CSS; navigation, buttons, forms, lists, help and native dialogs use only UI Kit styling.
+- Preserve switching logic, admin authorization, target selection, eligible live Hue scenes, backups, sorting and expansion state.
+
 ## 1.2.4
 
 - Render program groups, program rows and expanded actions with the shared HA UI Kit 1.2.1 components.
