@@ -5,7 +5,7 @@ import sys
 import types
 from copy import deepcopy
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 import probatio as vol
 from test_engine import fixture, program, action, lamp, state, at
 
@@ -99,6 +99,19 @@ class AdapterTests(IsolatedAsyncioTestCase):
     async def test_get_does_not_advance_engine_or_write_store(self):
         before=deepcopy(self.m.engine.rt);self.m.snapshot();self.m.snapshot()
         self.assertEqual(self.m.engine.rt,before);self.m.store.async_save.assert_not_called()
+
+    async def test_alarm_schedule_is_opt_in_read_only_and_admin_endpoint_stays_unchanged(self):
+        user=types.SimpleNamespace(is_admin=True,is_active=True,system_generated=False)
+        connection=types.SimpleNamespace(user=user,send_result=Mock(),send_error=Mock())
+        before=deepcopy(self.m.engine.rt)
+        with patch.object(adapter,'async_alarm_schedule',AsyncMock(return_value={'items': [], 'incomplete': False})) as reader:
+            await adapter.ws_get(self.hass,connection,{'id':1,'type':'light_manager/get'})
+            reader.assert_not_called()
+            await adapter.ws_get(self.hass,connection,{'id':2,'type':'light_manager/get','include_alarms':True})
+            reader.assert_awaited_once_with(self.hass,user,now=self.now,zone='Europe/Berlin')
+        self.assertEqual(connection.send_result.call_args.args[1]['alarm_schedule']['items'],[])
+        self.assertEqual(self.m.engine.rt,before)
+        self.m.store.async_save.assert_not_called();self.hass.services.async_call.assert_not_called()
 
     async def test_store_failure_prevents_device_commands(self):
         self.m.store.async_save.side_effect=RuntimeError('Storage unavailable')

@@ -34,12 +34,12 @@ const server=http.createServer((req,res)=>{
    {entity:'binary_sensor.bewegung',name:'Motion',state:'off',attributes:{device_class:'motion'}},
    {entity:'sensor.lux',name:'Illuminance',state:'42',attributes:{device_class:'illuminance',unit_of_measurement:'lx'}}
   ];
-  window.host={config:fixture,revision:0,calls:[],catalog};
+  window.host={config:fixture,revision:0,calls:[],catalog,alarmSchedule:{items:[],incomplete:false}};
   const card=document.querySelector('light-manager-card');
   card.hass={user:{id:'test'},states:Object.fromEntries(catalog.map(x=>[x.entity,{state:x.state,attributes:{...x.attributes,friendly_name:x.name}}])),callWS:async msg=>{
    host.calls.push(msg);
    if(msg.type==='light_manager/save'){if(host.failSave)throw Error('Save denied');await window.validateConfig(msg.config);host.config=structuredClone(msg.config);host.revision++;}
-   return {version,schema:4,revision:host.revision,config:structuredClone(host.config),catalog,status:{'light.flur':{kind:'time',mode:'on',program:'Evening'}},rules:[],warnings:[],history:[],daily_history:[{time:'2026-11-10T08:00:00Z',entities:['light.flur'],action:{mode:'off'},error:false}],planned:[],areas:[],lamp_areas:{},sun:{sunrise:'2026-11-10T06:30:00Z',sunset:'2026-11-10T16:00:00Z'},today:'2026-11-10',timezone:'Europe/Berlin'};
+   return {version,schema:4,revision:host.revision,config:structuredClone(host.config),catalog,status:{'light.flur':{kind:'time',mode:'on',program:'Evening'}},rules:[],warnings:[],history:[],alarm_schedule:host.alarmSchedule,daily_history:[{time:'2026-11-10T08:00:00Z',entities:['light.flur'],action:{mode:'off'},error:false}],planned:host.planned||[],areas:[],lamp_areas:{},sun:{sunrise:'2026-11-10T06:30:00Z',sunset:'2026-11-10T16:00:00Z'},today:host.today||'2026-11-10',timezone:'Europe/Berlin'};
   }};
  },{fixture,version});
  await page.locator('[data-op="add"]').waitFor();
@@ -251,6 +251,46 @@ const server=http.createServer((req,res)=>{
  await page.evaluate(()=>{document.documentElement.style.setProperty('--ha-card-background','#202020');document.documentElement.style.setProperty('--primary-text-color','#eeeeee');document.documentElement.style.setProperty('--secondary-text-color','#bbbbbb');});
  assert.equal(await page.locator('ha-card').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 32, 32)');
  await page.screenshot({path:path.join(root,'test-results/kit-qa-dark.png'),fullPage:true});
+
+ // Optional alarm actions join the daily schedule without any write controls.
+ const configBefore=await page.evaluate(()=>JSON.stringify(host.config));
+ const savesBefore=await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/save').length);
+ await page.evaluate(()=>{
+  Date.now=()=>Date.parse('2026-11-13T05:00:00Z');host.today='2026-11-13';
+  host.planned=[{program:'Evening',action:'on',due:'2026-11-13T05:20:00Z',skipped:false}];
+  host.alarmSchedule={incomplete:false,items:[
+   {id:'wake/sunrise/light.child',name:'Maximilian',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'sunrise',minutes:15,due:'2026-11-13T05:10:00Z',action:{mode:'on',brightness:65,kelvin:2700}},
+   {id:'wake/wake/light.child',name:'Maximilian',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'wake',minutes:0,due:'2026-11-13T05:30:00Z',action:{mode:'on',brightness:65,kelvin:2700}},
+   {id:'past',name:'Past alarm',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'wake',due:'2026-11-13T04:59:00Z',action:{mode:'on'}}
+  ]};
+ });
+ await nav('time').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
+ await page.locator('[data-alarm-action]').first().waitFor();
+ assert.equal(await page.locator('[data-alarm-action]').count(),2);
+ assert.equal(await page.locator('[data-alarm-action] button,[data-alarm-action] input').count(),0);
+ assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'⏰');
+ assert.equal(await page.locator('[data-alarm-action] [role=img]').first().getAttribute('aria-label'),'Alarm');
+ const titles=await page.locator('#lm-schedule-0-content .ride-info strong').allTextContents();
+ assert.ok(titles[0].startsWith('06:10'));assert.ok(titles[1].startsWith('06:20'));assert.ok(titles[2].startsWith('06:30'));
+ assert.equal(await page.locator('[data-op="skip"]').count(),1);
+ for(const width of [1100,390,320])for(const dark of [false,true]){
+  await page.setViewportSize({width,height:1000});
+  await page.evaluate(dark=>{for(const [key,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(key,value);},dark);
+  assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth}),false);
+  const marker=page.locator('[data-alarm-action] [role=img]').first();
+  assert.ok(await marker.evaluate(e=>parseFloat(getComputedStyle(e).fontSize))<=14);
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-alarm-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
+ }
+ assert.equal(await page.evaluate(()=>JSON.stringify(host.config)),configBefore);
+ assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/save').length),savesBefore);
+ assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),true);
+ await page.evaluate(()=>{host.alarmSchedule={items:[],incomplete:true};return document.querySelector('light-manager-card').refresh();});
+ assert.equal(await page.locator('[data-alarm-action]').count(),0);
+ assert.equal(await page.locator('[data-op="skip"]').count(),1);
+ assert.ok((await page.locator('main').innerText()).includes('Some alarm switching times could not be loaded.'));
+ await page.evaluate(()=>{host.alarmSchedule={items:[],incomplete:false};return document.querySelector('light-manager-card').refresh();});
+ await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
+ assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();
  assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.2.2'));
  assert.deepEqual(errors,[]);

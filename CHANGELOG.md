@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.6
+
+- Show today’s upcoming light actions from the optional Wecker Manager in chronological order in Schedule, marked by a small alarm icon.
+- Use the alarm scheduler’s calendar/day-type, permissions, completion and sunrise rules; show alarm lights without adding them to Light Manager configuration.
+- Keep alarm actions read-only; do not execute, copy or skip them from Light Manager. Existing schedules work without Wecker installed.
+
 ## 1.2.5
 
 - Update to locally bundled HA UI Kit 1.2.2 with aligned program names and metadata.

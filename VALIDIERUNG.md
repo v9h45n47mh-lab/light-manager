@@ -1,6 +1,6 @@
-# Validierung – Light Manager 1.2.5
+# Validierung – Light Manager 1.2.6
 
-1.2.5: Keine lokalen CSS-Regeln; gesamte Karte verwendet ausschließlich UI_CSS aus dem gepinnten Baukasten. Direkter Vergleich der berechneten Schriften, Farben, Abstände, Einrückungen und Maße von Programmgruppen, Programmzeilen, gemeinsamen Bedienelementen und aufgeklappten Aktionen mit einer unveränderten HA-UI-Kit-1.2.2-Referenz in separatem ShadowRoot. Geprüft bei 1100/390/320 px, jeweils hell/dunkel und auf-/zugeklappt. Kopieren, Sortieren, Aktivieren, Bearbeiten, Klappzustände und Speicherfehler geprüft.
+1.2.6: Keine lokalen CSS-Regeln; gesamte Karte verwendet ausschließlich UI_CSS aus dem gepinnten Baukasten. Direkter Vergleich der berechneten Schriften, Farben, Abstände, Einrückungen und Maße von Programmgruppen, Programmzeilen, gemeinsamen Bedienelementen und aufgeklappten Aktionen mit einer unveränderten HA-UI-Kit-1.2.2-Referenz in separatem ShadowRoot. Geprüft bei 1100/390/320 px, jeweils hell/dunkel und auf-/zugeklappt. Kopieren, Sortieren, Aktivieren, Bearbeiten, Klappzustände und Speicherfehler geprüft.
 
 113 Python-Tests sowie Browserprüfungen bei 1100, 390 und 320 px. Geprüft werden Deutsch/Englisch, helle und dunkle HA-Themefarben, Originalsymbole aus dem HA UI Kit, Navigationsreihenfolge, einklappbare Einstellungen, mobile Programmsteuerung, Urlaubsmodus in den Einstellungen, Programmbearbeitung und Speicherung, Sensoranzeigenamen, native Dialoge, Escape, Fokus und Erhalt offener Eingaben. Die gemeinsame UI-Version 1.2.2 wird lokal mit Lizenz und Prüfsummen geliefert. Automationslogik und Admin-WebSocket-Berechtigungen bleiben im Backend erhalten. Kein Live-Test gegen eine Hue-Bridge.
 
@@ -14,3 +14,5 @@ JSON, Python-/JavaScript-Syntax und Installations-ZIP geprüft. Home Assistant u
 0.5.0: Neue Szene während geöffnetem Editor ohne manuelle Einstellungen ergänzt; ungewählte gelöschte Szene entfernt; gewählte gelöschte Szene als nicht verfügbar erhalten. Name, Fokus und Szene bleiben beim Aktualisieren unverändert. Einmalseinträge aus Programme ausgeblendet, im Zeitprogramm bearbeitet und gelöscht; deaktivierter Eintrag ohne Backend-Planzeile weiterhin sichtbar. Browserprüfungen auf Desktop und bei 390 Pixel Breite.
 
 Vor jedem Release den Hilfe-Tab (?) auf Deutsch und Englisch mit dem aktuellen Funktionsumfang und den Beschriftungen abgleichen.
+
+1.2.6: Optionaler Wecker-Adapter mit 13 neuen Prüfungen für Berechtigungen, aktive/pausierte/erledigte Wecker, Phasenfreigabe durch den Originalplaner, lokale Datumsgrenzen, Geräte ohne Dimmung, wechselnde Revisionen und Ausfälle. GET ohne Wecker-Abfrage und Anzeige führen keine Gerätebefehle oder Speichervorgänge aus. Browser prüft chronologische Mischung, das kleine Weckersymbol ohne Bedienelemente, vergangene Termine, Ausfälle sowie Desktop/Mobil und beide Themes. Kein Live-Test gegen die private HA-Instanz.

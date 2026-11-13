@@ -26,9 +26,10 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.sun import get_astral_event_date
 
 from .engine import Engine, validate, restrict_scene_config, scene_matches
+from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.2.5'
+VERSION = '1.2.6'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -421,14 +422,19 @@ def signature_key(c):
     return c['key'] + ':' + ','.join(c['entities'])
 
 
-@websocket_api.websocket_command({vol.Required('type'): DOMAIN + '/get'})
+@websocket_api.websocket_command({vol.Required('type'): DOMAIN + '/get',
+                                 vol.Optional('include_alarms', default=False): bool})
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_get(hass, connection, msg):
     try:
         m = hass.data.get(DOMAIN)
         if not m: raise ValueError('Bitte zuerst die Integration Light Manager hinzufügen.')
-        connection.send_result(msg['id'], m.snapshot())
+        snapshot = m.snapshot()
+        if msg.get('include_alarms', False):
+            snapshot['alarm_schedule'] = await async_alarm_schedule(
+                hass, connection.user, now=utcnow(), zone=hass.config.time_zone)
+        connection.send_result(msg['id'], snapshot)
     except ValueError as err: connection.send_error(msg['id'], 'light_manager_error', str(err))
 
 
