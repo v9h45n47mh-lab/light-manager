@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.7
+
+- Update the locally bundled HA UI Kit to 1.4.1.
+- Replace the alarm emoji in Schedule with the shared UI Kit alarm SVG, keeping the compact 16 px marker and accessible label.
+- Preserve read-only alarm scheduling and existing Light Manager behavior.
+
 ## 1.2.6
 
 - Show today’s upcoming light actions from the optional Wecker Manager in chronological order in Schedule, marked by a small alarm icon.

@@ -29,7 +29,7 @@ from .engine import Engine, validate, restrict_scene_config, scene_matches
 from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.2.6'
+VERSION = '1.2.7'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 

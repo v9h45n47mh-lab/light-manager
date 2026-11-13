@@ -61,7 +61,7 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(async({theme})=>{
    const dark=theme==='dark';
    for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
-   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.2.2/family-ui.js');
+   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.4.1/family-ui.js');
    const card=document.querySelector('light-manager-card');
    if(card.shadowRoot.querySelector('style').textContent!==kit.UI_CSS+'\n')throw Error('Local stylesheet override detected');
    document.querySelector('#kit-reference')?.remove();
@@ -241,7 +241,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('#lm-once-date').isDisabled(),true);
  await page.keyboard.press('Escape');
  await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-action="lm-language"][data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.2.2'));
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.4.1'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -268,7 +268,9 @@ const server=http.createServer((req,res)=>{
  await page.locator('[data-alarm-action]').first().waitFor();
  assert.equal(await page.locator('[data-alarm-action]').count(),2);
  assert.equal(await page.locator('[data-alarm-action] button,[data-alarm-action] input').count(),0);
- assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'⏰');
+ assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().getAttribute('data-icon'),'media-alarm');
+ assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'');
+ assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.4.1/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().getAttribute('aria-label'),'Alarm');
  const titles=await page.locator('#lm-schedule-0-content .ride-info strong').allTextContents();
  assert.ok(titles[0].startsWith('06:10'));assert.ok(titles[1].startsWith('06:20'));assert.ok(titles[2].startsWith('06:30'));
@@ -278,7 +280,8 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(dark=>{for(const [key,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(key,value);},dark);
   assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth}),false);
   const marker=page.locator('[data-alarm-action] [role=img]').first();
-  assert.ok(await marker.evaluate(e=>parseFloat(getComputedStyle(e).fontSize))<=14);
+  assert.equal(await marker.locator('svg').evaluate(e=>getComputedStyle(e).width),'16px');
+  assert.equal(await marker.locator('svg').evaluate(e=>getComputedStyle(e).height),'16px');
   await page.screenshot({path:path.join(root,'test-results/kit-qa-alarm-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
  }
  assert.equal(await page.evaluate(()=>JSON.stringify(host.config)),configBefore);
@@ -292,7 +295,7 @@ const server=http.createServer((req,res)=>{
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();
- assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.2.2'));
+ assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.4.1'));
  assert.deepEqual(errors,[]);
  console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, group counts and folds, program editing, native dialog and Escape.');
  await browser.close();server.close();
