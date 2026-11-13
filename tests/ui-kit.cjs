@@ -313,11 +313,12 @@ const server=http.createServer((req,res)=>{
  assert.ok(windowTitles[0].startsWith('23:30'));assert.ok(windowTitles[1].startsWith('00:15'));assert.ok(windowTitles[2].startsWith('19:00'));
  assert.equal(await page.locator('#lm-schedule [data-ui="collapse"]').count(),0);
  assert.equal(await page.locator('main').evaluate(e=>e.innerText.includes('Friday')),false);
+ await page.evaluate(()=>{host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips=['2026-11-13'];return document.querySelector('light-manager-card').refresh();});
  const tomorrowSkip=page.locator('[data-op="skip"][data-date="2026-11-14"]');
  await tomorrowSkip.click();
- assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-14']);
+ assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13','2026-11-14']);
  await tomorrowSkip.click();
- assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),[]);
+ assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13']);
  for(const width of [1100,390,320])for(const dark of [false,true]){
   await page.setViewportSize({width,height:1000});
   await page.evaluate(dark=>{document.documentElement.style.setProperty('--ha-card-background',dark?'#202020':'#fff');document.documentElement.style.setProperty('--primary-text-color',dark?'#eee':'#212121');document.documentElement.style.setProperty('--secondary-text-color',dark?'#bbb':'#727272');document.documentElement.style.setProperty('--divider-color',dark?'#555':'#e0e0e0');},dark);

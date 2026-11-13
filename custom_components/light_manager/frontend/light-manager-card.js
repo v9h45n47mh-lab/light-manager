@@ -652,8 +652,8 @@ class LightManagerCard extends HTMLElement {
       else program.paused_on=today;
       await this.save(c);this.render();
     }
-    else if(op==='skip'){const c=lmClone(this.config),a=c.programs.find(p=>p.id===b.dataset.program).actions.find(a=>a.id===b.dataset.id),day=this.data.today;
-      a.skips=a.skips.includes(day)?a.skips.filter(x=>x!==day):[...a.skips.filter(x=>x>=day),day];await this.save(c);this.render();}
+    else if(op==='skip'){const c=lmClone(this.config),a=c.programs.find(p=>p.id===b.dataset.program).actions.find(a=>a.id===b.dataset.id),day=b.dataset.date||this.data.today;
+      a.skips=a.skips.includes(day)?a.skips.filter(x=>x!==day):[...a.skips.filter(x=>x>=this.data.today),day];await this.save(c);this.render();}
     else if(op==='delete')await this.remove(b.dataset.section,b.dataset.id);
     else if(op==='export'){const blob=new Blob([JSON.stringify({product:'Light Manager',version:LM_VERSION,config:this.config},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Light-Manager-Sicherung-'+this.data.today+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
     else if(op==='import')this.shadowRoot.getElementById('lm-backup').click();
