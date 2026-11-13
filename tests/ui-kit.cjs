@@ -273,7 +273,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.4.1/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().getAttribute('aria-label'),'Alarm');
  const titles=await page.locator('#lm-schedule .ride-info strong').allTextContents();
- assert.ok(titles[0].startsWith('06:10'));assert.ok(titles[1].startsWith('06:20'));assert.ok(titles[2].startsWith('06:30'));
+ assert.ok(titles[0].startsWith('Fri 06:10'));assert.ok(titles[1].startsWith('Fri 06:20'));assert.ok(titles[2].startsWith('Fri 06:30'));
  assert.equal(await page.locator('[data-op="skip"]').count(),1);
  for(const width of [1100,390,320])for(const dark of [false,true]){
   await page.setViewportSize({width,height:1000});
@@ -310,7 +310,8 @@ const server=http.createServer((req,res)=>{
  });
  assert.equal(await page.locator('#lm-schedule .ride').count(),3);
  let windowTitles=await page.locator('#lm-schedule .ride-info strong').allTextContents();
- assert.ok(windowTitles[0].startsWith('23:30'));assert.ok(windowTitles[1].startsWith('00:15'));assert.ok(windowTitles[2].startsWith('19:00'));
+ assert.ok(windowTitles[0].startsWith('Fri 23:30'));assert.ok(windowTitles[1].startsWith('Sat 00:15'));assert.ok(windowTitles[2].startsWith('Sat 19:00'));
+ assert.deepEqual(await page.evaluate(()=>{const c=document.querySelector('light-manager-card'),lang=c.language;c.language=()=> 'de';const values=['2026-11-13T22:30:00Z','2026-11-13T23:15:00Z'].map(d=>c.scheduleTime(d));c.language=lang;return values;}),['Fr 23:30','Sa 00:15']);
  assert.equal(await page.locator('#lm-schedule [data-ui="collapse"]').count(),0);
  assert.equal(await page.locator('main').evaluate(e=>e.innerText.includes('Friday')),false);
  await page.evaluate(()=>{host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips=['2026-11-13'];return document.querySelector('light-manager-card').refresh();});

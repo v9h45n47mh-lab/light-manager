@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.9
+
+- Prefix every switching time with its short local weekday, including alarm actions. Keep the rolling 24-hour chronological list without day headings.
+
 ## 1.2.8
 
 - Show the next 24 elapsed hours in Schedule as one chronological list with times only and no day headings.
