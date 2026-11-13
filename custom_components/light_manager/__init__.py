@@ -29,7 +29,7 @@ from .engine import Engine, validate, restrict_scene_config, scene_matches
 from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.2.7'
+VERSION = '1.2.8'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -292,7 +292,7 @@ class Manager:
                 'daily_history': [deepcopy(row) for row in self.daily_history
                                   if datetime.fromisoformat(row['time']).astimezone(ZoneInfo(self.hass.config.time_zone)).date() == local.date()],
                 'warnings': self.engine.warnings + list(self.errors.values()), 'history': list(reversed(self.history)),
-                'planned': deepcopy(self.engine.planned), 'calculated': calculated, 'sun': sun, 'today': str(local.date()),
+                'planned': self.engine.upcoming(now, self.solar), 'calculated': calculated, 'sun': sun, 'today': str(local.date()),
                 'timezone': self.hass.config.time_zone}
 
     def drop_removed_targets_from_finished_once(self, config):

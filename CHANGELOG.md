@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.8
+
+- Show the next 24 elapsed hours in Schedule as one chronological list with times only and no day headings.
+- Include recurring and one-time light actions after midnight, plus alarm actions and sunrise phases within the window.
+- Skip or restore the selected occurrence’s date, including tomorrow, without changing today’s occurrence.
+- Calculate the display window without advancing the execution engine or writing runtime state.
+
 ## 1.2.7
 
 - Update the locally bundled HA UI Kit to 1.4.1.

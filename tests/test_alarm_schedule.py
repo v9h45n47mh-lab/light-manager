@@ -88,7 +88,7 @@ class AlarmScheduleTests(IsolatedAsyncioTestCase):
     async def test_no_sunrise_across_midnight_matches_actual_scheduler(self):
         self.now = datetime(2026, 11, 13, 22, tzinfo=UTC)
         self.forecast['types']['schultag']['at'] = '2026-11-13T23:05:00+00:00'
-        self.assertEqual((await self.read())['items'], [])
+        self.assertEqual([row['phase'] for row in (await self.read())['items']], ['wake', 'wake'])
 
     async def test_local_date_instead_of_utc_date_and_no_tomorrow_entries(self):
         self.now = datetime(2026, 11, 13, 23, 1, tzinfo=UTC)
@@ -96,6 +96,18 @@ class AlarmScheduleTests(IsolatedAsyncioTestCase):
         self.assertEqual(len((await self.read())['items']), 3)
         self.forecast['types']['schultag']['at'] = '2026-11-14T23:30:00+00:00'
         self.assertEqual((await self.read())['items'], [])
+
+    async def test_sunrise_inside_window_is_shown_even_if_wake_is_outside(self):
+        self.now = datetime(2026, 11, 13, 5, 50, tzinfo=UTC)
+        self.record['settings'] = {'types': {'schultag': {'enabled': True, 'time': '07:00'}}}
+        self.forecast['types']['schultag'] = {'active': False, 'at': '2026-11-14T06:00:00+00:00'}
+        result = await self.read()
+        self.assertEqual([(row['phase'],row['due']) for row in result['items']], [('sunrise','2026-11-14T05:45:00+00:00')])
+
+    async def test_alarm_exact_window_end_is_excluded(self):
+        self.forecast['types']['schultag']['at'] = '2026-11-14T05:00:00+00:00'
+        result = await self.read()
+        self.assertEqual([row['phase'] for row in result['items']], ['sunrise'])
 
     async def test_changed_revision_is_not_combined_with_old_forecast(self):
         async def changed(*args):

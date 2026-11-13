@@ -361,6 +361,36 @@ class Engine:
         lower = self.walltime(day, a['earliest']); upper = self.walltime(day, a['latest'])
         return min(max(moment, lower), upper)
 
+    def upcoming(self, now, solar=None):
+        """Read-only schedule for the next 24 elapsed hours, including midnight."""
+        now = now.astimezone(timezone.utc)
+        until = now + timedelta(hours=24)
+        days = []
+        day, last = now.astimezone(self.zone).date(), until.astimezone(self.zone).date()
+        while day <= last:
+            days.append(day)
+            day += timedelta(days=1)
+        rows = []
+        for p in self.config['programs']:
+            if p['kind'] != 'time' or not p['enabled'] or (self.config['vacation'] and p['pause_in_vacation']):
+                continue
+            for a in p['actions']:
+                if not a['enabled']:
+                    continue
+                for day in days:
+                    if not self.valid_day(p, day):
+                        continue
+                    done = self.rt['once_done'].get(a['id'], {})
+                    if p.get('once_date') and done.get('date') == str(day) and done.get('complete'):
+                        continue
+                    due = self.due(a, day, solar)
+                    if due is None or not now <= due.astimezone(timezone.utc) < until:
+                        continue
+                    rows.append({'program': p['id'], 'action': a['id'], 'name': p['name'],
+                                 'due': due.isoformat(), 'mode': a['mode'],
+                                 'skipped': str(day) in a.get('skips', []), 'date': str(day)})
+        return sorted(rows, key=lambda row: datetime.fromisoformat(row['due']).timestamp())
+
     def target_lamps(self, targets, states=None):
         result = set()
         for target in targets:

@@ -15,7 +15,7 @@ def _timestamp(value):
 
 
 async def async_alarm_schedule(hass, caller, *, now, zone):
-    """Return today's future light actions, never claim/execute/save an alarm.
+    """Return light actions in the next 24 elapsed hours, never claim/execute/save an alarm.
 
     Only administrators can request the Light Manager snapshot. Still run the
     Wecker's own owner, account, calendar and entity permission checks here.
@@ -43,7 +43,12 @@ async def async_alarm_schedule(hass, caller, *, now, zone):
         return {**empty, 'incomplete': True}
     local_zone = ZoneInfo(zone)
     now = now.astimezone(timezone.utc)
-    today = now.astimezone(local_zone).date()
+    until = now + timedelta(hours=24)
+    dates = []
+    day, last = now.astimezone(local_zone).date(), until.astimezone(local_zone).date()
+    while day <= last:
+        dates.append(day)
+        day += timedelta(days=1)
 
     async def read(alarm_id, card_id):
         async with asyncio.timeout(12):
@@ -55,10 +60,27 @@ async def async_alarm_schedule(hass, caller, *, now, zone):
                 raise ValueError('Alarm changed during schedule calculation')
             names = {item['id']: item['name'] for item in wake.day_definitions(record)}
             result = []
-            for kind, plan in upcoming['types'].items():
-                if not plan.get('active') or not plan.get('at'):
+            candidates = [(kind, _timestamp(plan['at'])) for kind, plan in upcoming['types'].items()
+                          if plan.get('active') and plan.get('at')]
+            # upcoming_info bounds *wake times*. A sunrise can still be inside
+            # our window when its wake is just outside it. Its calendar dates
+            # have already been loaded by upcoming_info; the real due_phases
+            # function below remains the authority for actual eligibility.
+            for kind, settings in record.get('settings', {}).get('types', {}).items():
+                minutes = wake.sunrise_minutes(record, kind)
+                if not minutes or not settings.get('enabled'):
                     continue
-                due = _timestamp(plan['at'])
+                hour, minute = map(int, settings['time'].split(':'))
+                for day in dates:
+                    for fold in (0, 1):
+                        target = datetime(day.year, day.month, day.day, hour, minute, tzinfo=local_zone, fold=fold)
+                        utc = target.astimezone(timezone.utc)
+                        if utc.astimezone(local_zone).replace(tzinfo=None) != target.replace(tzinfo=None):
+                            continue
+                        start = (target - timedelta(minutes=minutes)).astimezone(timezone.utc)
+                        if utc >= until and now <= start < until:
+                            candidates.append((kind, utc))
+            for kind, due in candidates:
                 # Ask the actual scheduler whether each candidate phase is due.
                 # This preserves its midnight, DST and calendar rules.
                 wake_local = due.astimezone(local_zone)
@@ -69,7 +91,7 @@ async def async_alarm_schedule(hass, caller, *, now, zone):
                 for phase, local_due in phases:
                     instant = local_due.astimezone(timezone.utc)
                     date = wake_local.date().isoformat()
-                    if instant < now or local_due.date() != today:
+                    if not now <= instant < until:
                         continue
                     if instant.astimezone(local_zone).replace(tzinfo=None) != local_due.replace(tzinfo=None):
                         continue  # Nonexistent local wall time at a DST change.

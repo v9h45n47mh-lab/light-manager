@@ -272,7 +272,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'');
  assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.4.1/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().getAttribute('aria-label'),'Alarm');
- const titles=await page.locator('#lm-schedule-0-content .ride-info strong').allTextContents();
+ const titles=await page.locator('#lm-schedule .ride-info strong').allTextContents();
  assert.ok(titles[0].startsWith('06:10'));assert.ok(titles[1].startsWith('06:20'));assert.ok(titles[2].startsWith('06:30'));
  assert.equal(await page.locator('[data-op="skip"]').count(),1);
  for(const width of [1100,390,320])for(const dark of [false,true]){
@@ -292,6 +292,38 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('[data-op="skip"]').count(),1);
  assert.ok((await page.locator('main').innerText()).includes('Some alarm switching times could not be loaded.'));
  await page.evaluate(()=>{host.alarmSchedule={items:[],incomplete:false};return document.querySelector('light-manager-card').refresh();});
+
+ // Rolling window crosses midnight; wall-clock labels must not drive sorting.
+ await page.evaluate(()=>{
+  Date.now=()=>Date.parse('2026-11-13T22:00:00Z');
+  host.planned=[
+   {program:'Evening',action:'on',date:'2026-11-14',due:'2026-11-14T18:00:00Z',skipped:false},
+   {program:'Evening',action:'on',date:'2026-11-13',due:'2026-11-13T22:30:00Z',skipped:false},
+   {program:'Evening',action:'off',date:'2026-11-14',due:'2026-11-14T22:00:00Z',skipped:false},
+   {program:'Evening',action:'off',date:'2026-11-13',due:'2026-11-13T21:59:00Z',skipped:false}
+  ];
+  host.alarmSchedule={incomplete:false,items:[
+   {id:'tomorrow',name:'Maximilian',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'wake',due:'2026-11-13T23:15:00Z',action:{mode:'on',brightness:65}},
+   {id:'outside',name:'Outside',day_type:'Schultag',entity:'light.child',phase:'wake',due:'2026-11-14T22:01:00Z',action:{mode:'on'}}
+  ]};
+  return document.querySelector('light-manager-card').refresh();
+ });
+ assert.equal(await page.locator('#lm-schedule .ride').count(),3);
+ let windowTitles=await page.locator('#lm-schedule .ride-info strong').allTextContents();
+ assert.ok(windowTitles[0].startsWith('23:30'));assert.ok(windowTitles[1].startsWith('00:15'));assert.ok(windowTitles[2].startsWith('19:00'));
+ assert.equal(await page.locator('#lm-schedule [data-ui="collapse"]').count(),0);
+ assert.equal(await page.locator('main').evaluate(e=>e.innerText.includes('Friday')),false);
+ const tomorrowSkip=page.locator('[data-op="skip"][data-date="2026-11-14"]');
+ await tomorrowSkip.click();
+ assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-14']);
+ await tomorrowSkip.click();
+ assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),[]);
+ for(const width of [1100,390,320])for(const dark of [false,true]){
+  await page.setViewportSize({width,height:1000});
+  await page.evaluate(dark=>{document.documentElement.style.setProperty('--ha-card-background',dark?'#202020':'#fff');document.documentElement.style.setProperty('--primary-text-color',dark?'#eee':'#212121');document.documentElement.style.setProperty('--secondary-text-color',dark?'#bbb':'#727272');document.documentElement.style.setProperty('--divider-color',dark?'#555':'#e0e0e0');},dark);
+  assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth}),false);
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-24h-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
+ }
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();
