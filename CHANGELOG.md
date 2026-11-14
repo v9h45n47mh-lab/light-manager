@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Render Skip as a shared UI Kit icon-only button, with no visible text. Keep its tooltip, accessible name, skip/restore state and existing behavior.
+
 ## 1.3.0
 
 - Use HA UI Kit 1.5.0 with the shared compact Skip button and skip-once/reschedule icons.

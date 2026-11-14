@@ -317,11 +317,16 @@ const server=http.createServer((req,res)=>{
  await page.evaluate(()=>{host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips=['2026-11-13'];return document.querySelector('light-manager-card').refresh();});
  const tomorrowSkip=page.locator('[data-op="skip"][data-date="2026-11-14"]');
  await tomorrowSkip.click();
+ assert.equal(await tomorrowSkip.innerText(),'');
+ assert.equal(await tomorrowSkip.getAttribute('aria-pressed'),'true');
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13','2026-11-14']);
  await tomorrowSkip.click();
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13']);
  // Shared compact controls and persistent once-only move, with failed-save recovery.
- assert.equal(await tomorrowSkip.innerText(),'Skip');
+ assert.equal(await tomorrowSkip.innerText(),'');
+ assert.equal(await tomorrowSkip.getAttribute('aria-label'),'Skip');
+ assert.equal(await tomorrowSkip.getAttribute('title'),'Skip');
+ assert.equal(await tomorrowSkip.getAttribute('aria-pressed'),'false');
  assert.equal(await page.locator('[data-op="skip"]').first().locator('svg[data-icon="skip-once"]').count(),1);
  assert.equal(await page.locator('[data-op="reschedule"]').first().locator('svg[data-icon="reschedule"]').count(),1);
  assert.equal(await page.locator('[data-alarm-action] [data-op="reschedule"]').count(),0);

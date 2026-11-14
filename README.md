@@ -25,7 +25,7 @@ type: custom:light-manager-card
 
 ## GitHub-Release
 
-Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.3.0` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
+Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.3.1` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
 
 [Changelog](CHANGELOG.md) · [MIT-Lizenz](LICENSE)
 
@@ -41,4 +41,4 @@ Die Zeitübersicht zeigt zusätzlich Lichtaktionen der nächsten 24 Stunden aus 
 
 Die Zeitübersicht zeigt Schaltbefehle in einem rollenden 24-Stunden-Fenster, mit Tageskürzel vor jeder Uhrzeit, ohne Tagesüberschriften oder Datumsanzeige. Nach Mitternacht folgen die Uhrzeiten chronologisch; Auslassen bezieht sich auf das jeweilige Termindatum.
 
-Im Zeitprogramm überspringt der schmale **Skip**-Button mit UI-Kit-Symbol einen einzelnen Termin. Der benachbarte Uhr-Pfeil-Button verschiebt ihn einmalig innerhalb desselben Tages auf eine zukünftige Uhrzeit. Die reguläre Uhrzeit sowie andere Tage bleiben unverändert; Änderungen werden nach einem Neustart beibehalten. Wecker-Termine werden weiterhin ausschließlich im Wecker bearbeitet.
+Im Zeitprogramm überspringt der reine **Skip**-Icon-Button aus dem UI Kit (ohne sichtbaren Text) einen einzelnen Termin. Der benachbarte Uhr-Pfeil-Button verschiebt ihn einmalig innerhalb desselben Tages auf eine zukünftige Uhrzeit. Die reguläre Uhrzeit sowie andere Tage bleiben unverändert; Änderungen werden nach einem Neustart beibehalten. Wecker-Termine werden weiterhin ausschließlich im Wecker bearbeitet.

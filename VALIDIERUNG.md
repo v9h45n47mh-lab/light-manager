@@ -1,4 +1,4 @@
-# Validierung – Light Manager 1.3.0
+# Validierung – Light Manager 1.3.1
 
 1.3.0: Keine lokalen CSS-Regeln; gesamte Karte verwendet ausschließlich UI_CSS aus dem gepinnten Baukasten. Direkter Vergleich der berechneten Schriften, Farben, Abstände, Einrückungen und Maße von Programmgruppen, Programmzeilen, gemeinsamen Bedienelementen und aufgeklappten Aktionen mit einer unveränderten HA-UI-Kit-1.5.0-Referenz in separatem ShadowRoot. Geprüft bei 1100/390/320 px, jeweils hell/dunkel und auf-/zugeklappt. Kopieren, Sortieren, Aktivieren, Bearbeiten, Klappzustände und Speicherfehler geprüft.
 
@@ -24,3 +24,5 @@ Vor jedem Release den Hilfe-Tab (?) auf Deutsch und Englisch mit dem aktuellen F
 1.3.0: Tageskürzel pro Termin in der HA-Zeitzone für reguläre und Wecker-Aktionen; Browserprüfung auf Deutsch und Englisch sowie über Mitternacht.
 
 1.3.0: Einmalige Verschiebung vor/nach dem Originaltermin, Ablehnung vergangener Termine, Tagesgrenzen, Sonnenereignisse, Neustart, Skip und unveränderte Folgetage. UI-Kit-1.5.0-Symbole und kompakte Buttons; Desktop/Mobil und beide Themes.
+
+1.3.1: Skip als reiner UI-Kit-Icon-Button ohne sichtbare Beschriftung; Tooltip, zugänglicher Name und gedrückter Zustand. Auslassen/Wiederherstellen, Desktop/Mobil und beide Themes geprüft.
