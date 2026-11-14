@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Update to HA UI Kit 1.5.1 and use its shared inline action row layout for schedule controls.
+- Keep Skip and reschedule side by side on mobile, including long program names, without local CSS overrides.
+
 ## 1.3.1
 
 - Render Skip as a shared UI Kit icon-only button, with no visible text. Keep its tooltip, accessible name, skip/restore state and existing behavior.

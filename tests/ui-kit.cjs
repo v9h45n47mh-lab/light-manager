@@ -61,7 +61,7 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(async({theme})=>{
    const dark=theme==='dark';
    for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
-   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.0/family-ui.js');
+   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.1/family-ui.js');
    const card=document.querySelector('light-manager-card');
    if(card.shadowRoot.querySelector('style').textContent!==kit.UI_CSS+'\n')throw Error('Local stylesheet override detected');
    document.querySelector('#kit-reference')?.remove();
@@ -241,7 +241,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('#lm-once-date').isDisabled(),true);
  await page.keyboard.press('Escape');
  await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-action="lm-language"][data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.5.0'));
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.5.1'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -270,7 +270,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('[data-alarm-action] button,[data-alarm-action] input').count(),0);
  assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().getAttribute('data-icon'),'media-alarm');
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'');
- assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.0/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
+ assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.1/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().getAttribute('aria-label'),'Alarm');
  const titles=await page.locator('#lm-schedule .ride-info strong').allTextContents();
  assert.ok(titles[0].startsWith('Fri 06:10'));assert.ok(titles[1].startsWith('Fri 06:20'));assert.ok(titles[2].startsWith('Fri 06:30'));
@@ -322,6 +322,7 @@ const server=http.createServer((req,res)=>{
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13','2026-11-14']);
  await tomorrowSkip.click();
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13']);
+ await page.evaluate(()=>{host.config.programs.find(p=>p.id==='Evening').name='Zirkulationspumpe Wochenende - Morgens an - langer Programmname';return document.querySelector('light-manager-card').refresh();});
  // Shared compact controls and persistent once-only move, with failed-save recovery.
  assert.equal(await tomorrowSkip.innerText(),'');
  assert.equal(await tomorrowSkip.getAttribute('aria-label'),'Skip');
@@ -355,6 +356,8 @@ const server=http.createServer((req,res)=>{
   await page.setViewportSize({width,height:1000});
   await page.evaluate(dark=>{document.documentElement.style.setProperty('--ha-card-background',dark?'#202020':'#fff');document.documentElement.style.setProperty('--primary-text-color',dark?'#eee':'#212121');document.documentElement.style.setProperty('--secondary-text-color',dark?'#bbb':'#727272');document.documentElement.style.setProperty('--divider-color',dark?'#555':'#e0e0e0');},dark);
   assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth}),false);
+  const layout=await page.locator('#lm-schedule .ride').evaluateAll(rows=>rows.filter(row=>row.querySelector('[data-op="skip"]')).map(row=>{const skip=row.querySelector('[data-op="skip"]').getBoundingClientRect(),move=row.querySelector('[data-op="reschedule"]').getBoundingClientRect();return {sameLine:Math.abs(skip.y-move.y)<1,ordered:move.x>=skip.right,touch:skip.width>=40&&skip.height>=40&&move.width>=40&&move.height>=40,inline:row.querySelector('.ride-actions').classList.contains('inline-actions')};}));
+  assert.ok(layout.length>0&&layout.every(row=>row.sameLine&&row.ordered&&row.touch&&row.inline),'Skip/reschedule stay on one line, even with long names at '+width);
   await page.screenshot({path:path.join(root,'test-results/kit-qa-24h-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
   await tomorrowMove.click();
   assert.equal(await page.locator('#lm-reschedule').evaluate(e=>e.scrollWidth>e.clientWidth),false);
@@ -364,7 +367,7 @@ const server=http.createServer((req,res)=>{
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();
- assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.5.0'));
+ assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.5.1'));
  assert.deepEqual(errors,[]);
  console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, group counts and folds, program editing, native dialog and Escape.');
  await browser.close();server.close();
