@@ -343,7 +343,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('#lm-reschedule-time').fill('22:00');
  await page.locator('[data-action="lm-move-save"]').click();
  assert.ok((await page.locator('#lm-reschedule-error').innerText()).includes('future time'));
- await page.keyboard.press('Escape');assert.equal(await page.locator('#lm-reschedule').count(),0);
+ await page.keyboard.press('Escape');await page.locator('#lm-reschedule').waitFor({state:'detached'});
  for(const width of [1100,390,320])for(const dark of [false,true]){
   await page.setViewportSize({width,height:1000});
   await page.evaluate(dark=>{document.documentElement.style.setProperty('--ha-card-background',dark?'#202020':'#fff');document.documentElement.style.setProperty('--primary-text-color',dark?'#eee':'#212121');document.documentElement.style.setProperty('--secondary-text-color',dark?'#bbb':'#727272');document.documentElement.style.setProperty('--divider-color',dark?'#555':'#e0e0e0');},dark);
@@ -352,7 +352,7 @@ const server=http.createServer((req,res)=>{
   await tomorrowMove.click();
   assert.equal(await page.locator('#lm-reschedule').evaluate(e=>e.scrollWidth>e.clientWidth),false);
   await page.screenshot({path:path.join(root,'test-results/kit-qa-reschedule-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
-  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');await page.locator('#lm-reschedule').waitFor({state:'detached'});
  }
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
