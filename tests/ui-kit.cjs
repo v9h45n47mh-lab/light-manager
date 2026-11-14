@@ -39,7 +39,7 @@ const server=http.createServer((req,res)=>{
   card.hass={user:{id:'test'},states:Object.fromEntries(catalog.map(x=>[x.entity,{state:x.state,attributes:{...x.attributes,friendly_name:x.name}}])),callWS:async msg=>{
    host.calls.push(msg);
    if(msg.type==='light_manager/save'){if(host.failSave)throw Error('Save denied');await window.validateConfig(msg.config);host.config=structuredClone(msg.config);host.revision++;}
-   return {version,schema:4,revision:host.revision,config:structuredClone(host.config),catalog,status:{'light.flur':{kind:'time',mode:'on',program:'Evening'}},rules:[],warnings:[],history:[],alarm_schedule:host.alarmSchedule,daily_history:[{time:'2026-11-10T08:00:00Z',entities:['light.flur'],action:{mode:'off'},error:false}],planned:(host.planned||[]).map(row=>{const time=host.config.programs.find(p=>p.id===row.program)?.actions.find(a=>a.id===row.action)?.reschedules?.[row.date];return time?{...row,due:row.date+'T'+time+':00+01:00'}:row;}),areas:[],lamp_areas:{},sun:{sunrise:'2026-11-10T06:30:00Z',sunset:'2026-11-10T16:00:00Z'},today:host.today||'2026-11-10',timezone:'Europe/Berlin'};
+   return {version,schema:4,revision:host.revision,config:structuredClone(host.config),catalog,status:{'light.flur':{kind:'time',mode:'on',program:'Evening'}},rules:[],warnings:[],history:[],alarm_schedule:host.alarmSchedule,daily_history:[{time:'2026-11-10T08:00:00Z',entities:['light.flur'],action:{mode:'off'},error:false}],planned:(host.planned||[]).map(row=>{const action=host.config.programs.find(p=>p.id===row.program)?.actions.find(a=>a.id===row.action),time=action?.reschedules?.[row.date];return {...row,skipped:row.date?(action?.skips||[]).includes(row.date):row.skipped,...(time?{due:row.date+'T'+time+':00+01:00'}:{})};}),areas:[],lamp_areas:{},sun:{sunrise:'2026-11-10T06:30:00Z',sunset:'2026-11-10T16:00:00Z'},today:host.today||'2026-11-10',timezone:'Europe/Berlin'};
   }};
  },{fixture,version});
  await page.locator('[data-op="add"]').waitFor();
@@ -318,7 +318,7 @@ const server=http.createServer((req,res)=>{
  const tomorrowSkip=page.locator('[data-op="skip"][data-date="2026-11-14"]');
  await tomorrowSkip.click();
  assert.equal(await tomorrowSkip.innerText(),'');
- assert.equal(await tomorrowSkip.getAttribute('aria-pressed'),'true');
+ await page.waitForFunction(()=>document.querySelector('light-manager-card').shadowRoot.querySelector('[data-op="skip"][data-date="2026-11-14"]').getAttribute('aria-pressed')==='true');
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13','2026-11-14']);
  await tomorrowSkip.click();
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13']);
