@@ -51,6 +51,18 @@ class AdapterTests(IsolatedAsyncioTestCase):
         self.m=adapter.Manager(self.hass);self.hass.data[adapter.DOMAIN]=self.m
         self.now=at('2026-11-01T17:30:00');self.patch=patch.object(adapter,'utcnow',lambda:self.now);self.patch.start();self.addCleanup(self.patch.stop)
 
+    async def test_reschedule_rejects_past_without_persist_or_service_and_keeps_permissions(self):
+        c=fixture(program('p','time',[action(time='20:00')]))
+        self.m.engine.replace(c)
+        changed=deepcopy(c);changed['programs'][0]['actions'][0]['reschedules']={'2026-11-01':'18:00'}
+        with self.assertRaises(ValueError):await self.m.save(changed,0)
+        self.m.store.async_save.assert_not_called()
+        self.hass.services.async_call.assert_not_called()
+        self.assertEqual(self.m.revision,0)
+        changed['programs'][0]['actions'][0]['reschedules']={'2026-11-01':'21:00'}
+        await self.m.save(changed,0)
+        self.assertEqual(self.m.engine.config['programs'][0]['actions'][0]['reschedules'],{'2026-11-01':'21:00'})
+
     async def test_ws_save_accepts_structured_config_and_persists_without_duplicate_calls(self):
         c=fixture(program('p','time',[action(time='18:00')]))
         checked=adapter.ws_save.ws_schema({'id':1,'type':'light_manager/save','config':c,'revision':0})

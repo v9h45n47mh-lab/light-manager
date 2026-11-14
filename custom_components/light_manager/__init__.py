@@ -29,7 +29,7 @@ from .engine import Engine, validate, restrict_scene_config, scene_matches
 from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.2.9'
+VERSION = '1.3.0'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -335,6 +335,7 @@ class Manager:
             if revision != self.revision:
                 raise ValueError('Die Konfiguration wurde zwischenzeitlich geändert. Bitte neu laden; deine Eingaben bleiben erhalten.')
             checked = validate(self.drop_removed_targets_from_finished_once(config))
+            self.engine.validate_reschedules(checked, utcnow(), self.solar)
             self.validate_live(checked)
             previous, previous_revision = deepcopy(self.engine), self.revision
             self.engine.replace(checked); self.revision += 1

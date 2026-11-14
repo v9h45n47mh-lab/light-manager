@@ -246,6 +246,13 @@ def validate(raw):
             require(not (a.get('kelvin') is not None and a.get('rgb') is not None), 'Farbe oder Farbtemperatur auswählen.')
             # Legacy backups may contain fades. Light Manager always switches directly.
             a.pop('transition', None)
+            moves = a.get('reschedules', {})
+            require(isinstance(moves, dict) and len(moves) <= 30, 'Ungültige Verschiebungen.')
+            require(not moves or p['kind'] == 'time', 'Nur Zeitaktionen können verschoben werden.')
+            for day, value in moves.items():
+                try: require(str(date.fromisoformat(day)) == day, 'Ungültiges Verschiebedatum.')
+                except (ValueError, TypeError): raise ValueError('Ungültiges Verschiebedatum.') from None
+                clock(value)
             for key in ('skips',):
                 require(isinstance(a.get(key, []), list) and len(a.get(key, [])) <= 30, 'Ungültige Auslassungen.')
                 for day in a.get(key, []):
@@ -351,6 +358,9 @@ class Engine:
         return local.astimezone(timezone.utc).astimezone(self.zone)
 
     def due(self, a, day, solar):
+        moved = a.get('reschedules', {}).get(str(day))
+        if moved is not None:
+            return self.walltime(day, moved)
         if a['event'] == 'fixed':
             moment = self.walltime(day, a['time'])
         else:
@@ -360,6 +370,31 @@ class Engine:
         if moment is None: return None
         lower = self.walltime(day, a['earliest']); upper = self.walltime(day, a['latest'])
         return min(max(moment, lower), upper)
+
+    def validate_reschedules(self, config, now, solar=None):
+        """Only future, existing occurrences may move, within their own local day."""
+        now = now.astimezone(timezone.utc)
+        old = {a['id']: (p, a) for p in self.config['programs'] for a in p['actions']}
+        for program in config['programs']:
+            for action in program['actions']:
+                prior = old.get(action['id'])
+                previous = prior[1].get('reschedules', {}) if prior else {}
+                if prior is None:
+                    prior = (program, {k: v for k, v in action.items() if k != 'reschedules'})
+                for key, clock_value in action.get('reschedules', {}).items():
+                    if previous.get(key) == clock_value:
+                        continue
+                    day = date.fromisoformat(key)
+                    due = self.walltime(day, clock_value)
+                    source = self.due(prior[1], day, solar) if prior else None
+                    if (prior[0]['kind'] != 'time' or not prior[0]['enabled'] or
+                            not prior[1]['enabled'] or not self.valid_day(prior[0], day) or
+                            (self.config['vacation'] and prior[0]['pause_in_vacation']) or
+                            source is None or source.astimezone(timezone.utc) <= now or
+                            source.astimezone(self.zone).date() != day or
+                            due.astimezone(timezone.utc) <= now or due.date() != day or
+                            due.strftime('%H:%M') != clock_value):
+                        raise ValueError('Nur eingeplante Schaltungen können am selben Tag in die Zukunft verschoben werden.')
 
     def upcoming(self, now, solar=None):
         """Read-only schedule for the next 24 elapsed hours, including midnight."""
@@ -557,7 +592,8 @@ class Engine:
                 except ValueError as err:
                     self.warnings.append(str(err)); continue
                 if p['kind'] != 'time': active_sensors.update((e, occurrence) for e in affected)
-                key = signature([occurrence, a, None, sorted(affected)])
+                key_action = {k: v for k, v in a.items() if k != 'reschedules'}
+                key = signature([occurrence, key_action, None, sorted(affected)])
                 # At the same time, an explicit one-time action overrides a recurring schedule.
                 rank = (PRIORITY[p['kind']], due.timestamp() if due else 0, bool(p.get('once_date')), -pi, -ai)
                 candidates.append({'key': key, 'rank': rank, 'program': p['id'], 'name': p['name'],

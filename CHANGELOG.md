@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Use HA UI Kit 1.5.0 with the shared compact Skip button and skip-once/reschedule icons.
+- Move a scheduled switching occurrence once to another future time on the same local day without changing the regular program. Persist and validate changes on the server, including solar actions.
+- Keep alarm entries read-only and retain skip, permissions and concurrency checks.
+
 ## 1.2.9
 
 - Prefix every switching time with its short local weekday, including alarm actions. Keep the rolling 24-hour chronological list without day headings.
