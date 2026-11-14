@@ -61,7 +61,7 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(async({theme})=>{
    const dark=theme==='dark';
    for(const [name,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(name,value);
-   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.1/family-ui.js');
+   const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.2/family-ui.js');
    const card=document.querySelector('light-manager-card');
    if(card.shadowRoot.querySelector('style').textContent!==kit.UI_CSS+'\n')throw Error('Local stylesheet override detected');
    document.querySelector('#kit-reference')?.remove();
@@ -241,7 +241,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('#lm-once-date').isDisabled(),true);
  await page.keyboard.press('Escape');
  await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-action="lm-language"][data-language="en"]').click();
- assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.5.1'));
+ assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.5.2'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
  await page.locator('[data-path="name"]').fill('Door renamed');
@@ -270,7 +270,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('[data-alarm-action] button,[data-alarm-action] input').count(),0);
  assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().getAttribute('data-icon'),'media-alarm');
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'');
- assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.1/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
+ assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().evaluate(async e=>{const kit=await import('/custom_components/light_manager/frontend/family-ui/1.5.2/family-ui.js');const t=document.createElement('template');t.innerHTML=kit.icon('media-alarm');return e.isEqualNode(t.content.firstElementChild);}),true);
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().getAttribute('aria-label'),'Alarm');
  const titles=await page.locator('#lm-schedule .ride-info strong').allTextContents();
  assert.ok(titles[0].startsWith('Fri 06:10'));assert.ok(titles[1].startsWith('Fri 06:20'));assert.ok(titles[2].startsWith('Fri 06:30'));
@@ -320,6 +320,10 @@ const server=http.createServer((req,res)=>{
  assert.equal(await tomorrowSkip.innerText(),'');
  await page.waitForFunction(()=>document.querySelector('light-manager-card').shadowRoot.querySelector('[data-op="skip"][data-date="2026-11-14"]').getAttribute('aria-pressed')==='true');
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13','2026-11-14']);
+ assert.equal(await tomorrowSkip.locator('svg[data-icon="restore-schedule"]').count(),1);
+ assert.equal(await tomorrowSkip.locator('svg[data-icon="skip-once"]').count(),0);
+ assert.equal(await tomorrowSkip.locator('xpath=../..').locator('.ride-info small').count(),0);
+ assert.equal(await tomorrowSkip.locator('xpath=../..').locator('.ride-info strong').evaluate(e=>getComputedStyle(e).color),'rgb(158, 158, 158)');
  await tomorrowSkip.click();
  assert.deepEqual(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').skips),['2026-11-13']);
  await page.evaluate(()=>{host.config.programs.find(p=>p.id==='Evening').name='Zirkulationspumpe Wochenende - Morgens an - langer Programmname';return document.querySelector('light-manager-card').refresh();});
@@ -328,7 +332,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await tomorrowSkip.getAttribute('aria-label'),'Skip');
  assert.equal(await tomorrowSkip.getAttribute('title'),'Skip');
  assert.equal(await tomorrowSkip.getAttribute('aria-pressed'),'false');
- assert.equal(await page.locator('[data-op="skip"]').first().locator('svg[data-icon="skip-once"]').count(),1);
+ assert.equal(await tomorrowSkip.locator('svg[data-icon="skip-once"]').count(),1);
  assert.equal(await page.locator('[data-op="reschedule"]').first().locator('svg[data-icon="reschedule"]').count(),1);
  assert.equal(await page.locator('[data-alarm-action] [data-op="reschedule"]').count(),0);
  const tomorrowMove=page.locator('[data-op="reschedule"][data-date="2026-11-14"]');
@@ -364,10 +368,25 @@ const server=http.createServer((req,res)=>{
   await page.screenshot({path:path.join(root,'test-results/kit-qa-reschedule-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
   await page.keyboard.press('Escape');await page.locator('#lm-reschedule').waitFor({state:'detached'});
  }
+ await tomorrowSkip.click();
+ await page.waitForFunction(()=>document.querySelector('light-manager-card').shadowRoot.querySelector('[data-op="skip"][data-date="2026-11-14"]').getAttribute('aria-pressed')==='true');
+ for(const width of [1100,390,320])for(const dark of [false,true]){
+  await page.setViewportSize({width,height:1000});
+  await page.evaluate(dark=>{document.documentElement.style.setProperty('--ha-card-background',dark?'#202020':'#fff');document.documentElement.style.setProperty('--primary-text-color',dark?'#eee':'#212121');document.documentElement.style.setProperty('--secondary-text-color',dark?'#bbb':'#727272');},dark);
+  assert.equal(await page.locator('#lm-schedule .ride.skipped .ride-info strong').evaluate(e=>getComputedStyle(e).color),'rgb(158, 158, 158)');
+  assert.equal(await page.locator('#lm-schedule .ride.skipped .ride-info small').count(),0);
+  assert.equal(await tomorrowSkip.locator('svg[data-icon="restore-schedule"]').count(),1);
+  const line=await tomorrowSkip.evaluate(e=>{const a=e.getBoundingClientRect(),b=e.parentElement.querySelector('[data-op="reschedule"]').getBoundingClientRect();return Math.abs(a.y-b.y)<1&&b.x>=a.right;});assert.equal(line,true);
+  await page.screenshot({path:path.join(root,'test-results/kit-qa-skipped-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
+ }
+ await tomorrowSkip.click();
+ await page.waitForFunction(()=>document.querySelector('light-manager-card').shadowRoot.querySelector('[data-op="skip"][data-date="2026-11-14"]').getAttribute('aria-pressed')==='false');
+ assert.equal(await tomorrowSkip.locator('svg[data-icon="skip-once"]').count(),1);
+ assert.equal(await tomorrowSkip.locator('xpath=../..').evaluate(e=>e.classList.contains('skipped')),false);
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();
- assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.5.1'));
+ assert.ok((await page.locator('.howto').innerText()).includes('HA UI Kit 1.5.2'));
  assert.deepEqual(errors,[]);
  console.log('UI Kit migration passed: desktop/mobile, DE/EN, themes, settings folds, names, group counts and folds, program editing, native dialog and Escape.');
  await browser.close();server.close();

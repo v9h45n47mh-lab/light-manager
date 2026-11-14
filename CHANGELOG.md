@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.3
+
+- Use HA UI Kit 1.5.2 skipped rows with light-gray text and the distinct restore-schedule icon.
+- Remove the redundant skip status text while preserving icon-only controls, skip/restore behavior and inline button layout.
+
 ## 1.3.2
 
 - Update to HA UI Kit 1.5.1 and use its shared inline action row layout for schedule controls.
