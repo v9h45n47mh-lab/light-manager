@@ -344,6 +344,8 @@ const server=http.createServer((req,res)=>{
  await page.locator('#lm-reschedule').waitFor({state:'detached'});
  assert.equal(await page.evaluate(()=>host.config.programs.find(p=>p.id==='Evening').actions.find(a=>a.id==='on').reschedules['2026-11-14']),'18:30');
  assert.ok((await page.locator('#lm-schedule .ride-info strong').allTextContents())[2].startsWith('Sat 18:30'));
+ await page.locator('[data-op="skip"][data-date="2026-11-13"]').click();
+ await page.waitForFunction(()=>!document.querySelector('light-manager-card').shadowRoot.querySelector('[data-op="reschedule"][data-date="2026-11-13"]').disabled);
  await page.locator('[data-op="reschedule"][data-date="2026-11-13"]').click();
  await page.locator('#lm-reschedule-time').fill('22:00');
  await page.locator('[data-action="lm-move-save"]').click();
