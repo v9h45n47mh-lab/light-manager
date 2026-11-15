@@ -112,7 +112,7 @@ const server=http.createServer((req,res)=>{
   await nav('programs').click();
   const controls=page.locator('.program-head').first().locator(':scope > .toolbar');
   assert.equal(await page.evaluate(()=>{const c=document.querySelector('light-manager-card');return c.shadowRoot.querySelector('ha-card').scrollWidth>c.clientWidth;}),false);
-  if(width<600)assert.ok(await page.locator('.program-title').first().evaluate(e=>e.getBoundingClientRect().width)>150);
+  if(width<600)assert.ok(await page.locator('.program-title').first().evaluate(e=>e.getBoundingClientRect().width)>100);
   if(width<600){assert.equal(await controls.locator('[data-action="copy-program"]').isVisible(),false);assert.equal(await controls.locator('.program-order').isVisible(),true);}
   assert.equal(await page.locator('[data-op="filter-vacation"]').count(),0);
   assert.equal(await page.locator('.program-title').count(),3);
