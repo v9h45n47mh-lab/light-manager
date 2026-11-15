@@ -1,5 +1,11 @@
 # Light Manager
 
+## Neu in 1.6.0
+
+Manuell sortierbare Einträge werden am gemeinsamen Sortiergriff gedrückt gehalten und an die gewünschte Position gezogen. Die bisherigen Auf-/Ab-Pfeile entfallen. Maus, Touch und Tastatur am Griff werden unterstützt; Escape bricht den Vorgang ab. HA UI Kit 1.7.0 liefert Griff, Rückmeldung und Interaktion gemeinsam. Bestehende Rechte und gespeicherte Daten bleiben erhalten.
+
+Ziehen sortiert Zeit-/Sensorprogramme jeweils innerhalb ihrer Gruppe sowie die Bereiche in den Lampeneinstellungen. Deutsche und englische Hilfe angepasst.
+
 ## Neu in 1.5.2
 
 Urlaubsbedingt pausierte Einträge in der Zeitübersicht bleiben ausgegraut und zeigen keine Aktionsbuttons. Das gilt auch für einmalige Programme: Bearbeiten, Löschen, Skip und Verschieben entfallen während der Urlaubspause. Nach Ende der Pause erscheinen die zulässigen Aktionen wieder. Anzeige ausschließlich mit dem unveränderten UI Kit; deutsche und englische Hilfe aktualisiert. Ausführungslogik und Berechtigungen bleiben erhalten.
