@@ -1,5 +1,11 @@
 # Light Manager
 
+## Neu in 1.6.0
+
+Manuell sortierbare Einträge werden am gemeinsamen Sortiergriff gedrückt gehalten und an die gewünschte Position gezogen. Die bisherigen Auf-/Ab-Pfeile entfallen. Maus, Touch und Tastatur am Griff werden unterstützt; Escape bricht den Vorgang ab. HA UI Kit 1.7.0 liefert Griff, Rückmeldung und Interaktion gemeinsam. Bestehende Rechte und gespeicherte Daten bleiben erhalten.
+
+Ziehen sortiert Zeit-/Sensorprogramme jeweils innerhalb ihrer Gruppe sowie die Bereiche in den Lampeneinstellungen. Deutsche und englische Hilfe angepasst.
+
 ## Neu in 1.5.2
 
 Urlaubsbedingt pausierte Einträge in der Zeitübersicht bleiben ausgegraut und zeigen keine Aktionsbuttons. Das gilt auch für einmalige Programme: Bearbeiten, Löschen, Skip und Verschieben entfallen während der Urlaubspause. Nach Ende der Pause erscheinen die zulässigen Aktionen wieder. Anzeige ausschließlich mit dem unveränderten UI Kit; deutsche und englische Hilfe aktualisiert. Ausführungslogik und Berechtigungen bleiben erhalten.
@@ -8,7 +14,7 @@ Urlaubsbedingt pausierte Einträge in der Zeitübersicht bleiben ausgegraut und 
 
 Urlaubsbedingt pausierte Schaltungen bleiben in der Zeitübersicht der nächsten 24 Stunden mit „Urlaubspause“ sichtbar. Die Vorschau startet keine Schaltung und verändert keine Programmdaten. Nicht betroffene Programme laufen weiterhin normal; deaktivierte Programme und Aktionen bleiben ausgeblendet. Einmaliges Verschieben ist für pausierte Einträge deaktiviert.
 
-Die zentrale Integration heißt Family Administration; der Urlaubsmodus befindet sich im eigenen Tab **Urlaubsmodus**. Deutsche und englische Hilfe angepasst. Rechte, zentrale Anbindung und HA UI Kit 1.5.2 bleiben erhalten.
+Die zentrale Integration heißt Family Administration; der Urlaubsmodus befindet sich im eigenen Tab **Urlaubsmodus**. Deutsche und englische Hilfe angepasst. Rechte, zentrale Anbindung und HA UI Kit 1.7.0 bleiben erhalten.
 
 ## Zentraler Urlaubsmodus · 1.5.0
 
@@ -52,9 +58,9 @@ Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem ande
 
 ## Gemeinsame Oberfläche
 
-Diese Version liefert HA UI Kit 1.5.2 lokal mit. Navigation, Symbole, Farben, Schriften, Einstellungsbereiche, Bedienelemente und native Dialoge verwenden den gemeinsamen Baukasten. Weitere Installationen oder externe Laufzeitverbindungen sind dafür nicht erforderlich.
+Diese Version liefert HA UI Kit 1.7.0 lokal mit. Navigation, Symbole, Farben, Schriften, Einstellungsbereiche, Bedienelemente und native Dialoge verwenden den gemeinsamen Baukasten. Weitere Installationen oder externe Laufzeitverbindungen sind dafür nicht erforderlich.
 
-Programmgruppen, Programmzeilen und aufgeklappte Aktionen werden direkt vom HA UI Kit 1.5.2 erzeugt. Ihre Schrift, Abstände, Einrückungen und Bedienelemente werden ohne lokale CSS-Überschreibungen übernommen.
+Programmgruppen, Programmzeilen und aufgeklappte Aktionen werden direkt vom HA UI Kit 1.7.0 erzeugt. Ihre Schrift, Abstände, Einrückungen und Bedienelemente werden ohne lokale CSS-Überschreibungen übernommen.
 
 Ab 1.2.8 stammen auch Geräteauswahl, Wochentage, Saison, Zeitfenster, Farbregler, Aktionseditoren, Messwerte, Verlauf und Tagesansichten aus dem Baukasten. Die Karte enthält keine lokalen CSS-Regeln.
 
@@ -64,7 +70,7 @@ Die Zeitübersicht zeigt Schaltbefehle in einem rollenden 24-Stunden-Fenster, mi
 
 Im Zeitprogramm überspringt der reine **Skip**-Icon-Button aus dem UI Kit (ohne sichtbaren Text) einen einzelnen Termin. Der benachbarte Uhr-Pfeil-Button verschiebt ihn einmalig innerhalb desselben Tages auf eine zukünftige Uhrzeit. Die reguläre Uhrzeit sowie andere Tage bleiben unverändert; Änderungen werden nach einem Neustart beibehalten. Wecker-Termine werden weiterhin ausschließlich im Wecker bearbeitet.
 
-Skip und Verschieben verwenden die gemeinsame Inline-Aktionsgruppe aus HA UI Kit 1.5.2 und bleiben auch bei langen Namen und auf kleinen Mobilgeräten nebeneinander.
+Skip und Verschieben verwenden die gemeinsame Inline-Aktionsgruppe aus HA UI Kit 1.7.0 und bleiben auch bei langen Namen und auf kleinen Mobilgeräten nebeneinander.
 
 Ausgelassene Termine erscheinen hellgrau, ohne zusätzlichen Auslassen-Text. Das neue UI-Kit-Symbol mit Rückkehrpfeil und Uhr plant den Termin wieder ein.
 
