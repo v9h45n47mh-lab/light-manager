@@ -390,7 +390,9 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(language=>{document.querySelector('light-manager-card').language=()=>language;document.querySelector('light-manager-card').render();},language);
   const reason=language==='de'?'Urlaubspause':'Vacation pause';
   assert((await page.locator('#lm-schedule').innerText()).includes(reason));
-  assert.equal(await page.locator('#lm-schedule [data-op="reschedule"]:not(:disabled)').count(),0);
+  assert.equal(await page.locator('#lm-schedule .ride.muted').count(),2);
+  assert.equal(await page.locator('#lm-schedule .ride.muted button').count(),0);
+  assert.equal(await page.locator('#lm-schedule .ride.muted .ride-info').first().evaluate(el=>getComputedStyle(el).opacity),'0.55');
   for(const width of [1100,390,320])for(const dark of [false,true]){
    await page.setViewportSize({width,height:1000});
    await page.evaluate(dark=>{for(const [key,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(key,value);},dark);
@@ -398,6 +400,13 @@ const server=http.createServer((req,res)=>{
    if(language==='de')await page.screenshot({path:path.join(root,'test-results/kit-qa-vacation-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
   }
  }
+ // A one-time paused program also hides Edit and Delete; active actions regain controls.
+ await page.evaluate(()=>{const card=document.querySelector('light-manager-card');card.config.programs.find(p=>p.id==='Evening').once_date='2026-11-14';card.render();});
+ assert.equal(await page.locator('#lm-schedule .ride.muted button').count(),0);
+ await page.evaluate(()=>{const card=document.querySelector('light-manager-card');delete card.config.programs.find(p=>p.id==='Evening').once_date;host.planned=host.planned.map(row=>({...row,paused:false,reason:''}));return card.refresh();});
+ assert.equal(await page.locator('#lm-schedule .ride.muted').count(),0);
+ assert.equal(await page.locator('#lm-schedule [data-op="skip"]').count(),2);
+ assert.equal(await page.locator('#lm-schedule [data-op="reschedule"]').count(),2);
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();

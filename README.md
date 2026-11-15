@@ -1,5 +1,9 @@
 # Light Manager
 
+## Neu in 1.5.2
+
+Urlaubsbedingt pausierte Einträge in der Zeitübersicht bleiben ausgegraut und zeigen keine Aktionsbuttons. Das gilt auch für einmalige Programme: Bearbeiten, Löschen, Skip und Verschieben entfallen während der Urlaubspause. Nach Ende der Pause erscheinen die zulässigen Aktionen wieder. Anzeige ausschließlich mit dem unveränderten UI Kit; deutsche und englische Hilfe aktualisiert. Ausführungslogik und Berechtigungen bleiben erhalten.
+
 ## Neu in 1.5.1
 
 Urlaubsbedingt pausierte Schaltungen bleiben in der Zeitübersicht der nächsten 24 Stunden mit „Urlaubspause“ sichtbar. Die Vorschau startet keine Schaltung und verändert keine Programmdaten. Nicht betroffene Programme laufen weiterhin normal; deaktivierte Programme und Aktionen bleiben ausgeblendet. Einmaliges Verschieben ist für pausierte Einträge deaktiviert.
@@ -42,7 +46,7 @@ type: custom:light-manager-card
 
 ## GitHub-Release
 
-Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.5.1` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
+Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.5.2` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
 
 [Changelog](CHANGELOG.md) · [MIT-Lizenz](LICENSE)
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.2
+
+Urlaubsbedingt pausierte Einträge in der Zeitübersicht bleiben ausgegraut und zeigen keine Aktionsbuttons. Das gilt auch für einmalige Programme: Bearbeiten, Löschen, Skip und Verschieben entfallen während der Urlaubspause. Nach Ende der Pause erscheinen die zulässigen Aktionen wieder. Anzeige ausschließlich mit dem unveränderten UI Kit; deutsche und englische Hilfe aktualisiert. Ausführungslogik und Berechtigungen bleiben erhalten.
+
+
 ## 1.5.1
 
 Urlaubsbedingt pausierte Schaltungen bleiben in der Zeitübersicht der nächsten 24 Stunden mit „Urlaubspause“ sichtbar. Die Vorschau startet keine Schaltung und verändert keine Programmdaten. Nicht betroffene Programme laufen weiterhin normal; deaktivierte Programme und Aktionen bleiben ausgeblendet. Einmaliges Verschieben ist für pausierte Einträge deaktiviert.
