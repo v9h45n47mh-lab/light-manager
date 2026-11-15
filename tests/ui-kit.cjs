@@ -240,7 +240,7 @@ const server=http.createServer((req,res)=>{
  await nav('time').click();await page.locator('[data-op="once"]').click();
  assert.equal(await page.locator('#lm-once-date').isDisabled(),true);
  await page.keyboard.press('Escape');
- await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),1);await page.locator('[data-action="lm-language"][data-language="en"]').click();
+ await nav('settings').click();assert.equal(await page.locator('[data-vacation]').count(),0);await page.locator('[data-action="lm-language"][data-language="en"]').click();
  assert.ok((await page.locator('.version-info').innerText()).includes('UI 1.5.2'));
  await section('sensors').click();
  await page.locator('[data-op="edit"][data-section="sensors"]').first().click();
