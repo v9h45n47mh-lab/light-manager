@@ -259,7 +259,7 @@ const server=http.createServer((req,res)=>{
   Date.now=()=>Date.parse('2026-11-13T05:00:00Z');host.today='2026-11-13';
   host.planned=[{program:'Evening',action:'on',due:'2026-11-13T05:20:00Z',skipped:false}];
   host.alarmSchedule={incomplete:false,items:[
-   {id:'wake/sunrise/light.child',name:'Maximilian',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'sunrise',minutes:15,due:'2026-11-13T05:10:00Z',action:{mode:'on',brightness:65,kelvin:2700}},
+   {id:'wake/sunrise/light.child',name:'Maximilian',day_type:'Werktag',entity:'light.child',target_name:'Kinderzimmer',phase:'sunrise',minutes:15,due:'2026-11-13T05:10:00Z',action:{mode:'on',brightness:65,kelvin:2700}},
    {id:'wake/wake/light.child',name:'Maximilian',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'wake',minutes:0,due:'2026-11-13T05:30:00Z',action:{mode:'on',brightness:65,kelvin:2700}},
    {id:'past',name:'Past alarm',day_type:'Schultag',entity:'light.child',target_name:'Kinderzimmer',phase:'wake',due:'2026-11-13T04:59:00Z',action:{mode:'on'}}
   ]};
@@ -267,6 +267,7 @@ const server=http.createServer((req,res)=>{
  await nav('time').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  await page.locator('[data-alarm-action]').first().waitFor();
  assert.equal(await page.locator('[data-alarm-action]').count(),2);
+ assert.ok((await page.locator('[data-alarm-action]').first().innerText()).includes('Werktag'));
  assert.equal(await page.locator('[data-alarm-action] button,[data-alarm-action] input').count(),0);
  assert.equal(await page.locator('[data-alarm-action] [role=img] svg').first().getAttribute('data-icon'),'media-alarm');
  assert.equal(await page.locator('[data-alarm-action] [role=img]').first().innerText(),'');

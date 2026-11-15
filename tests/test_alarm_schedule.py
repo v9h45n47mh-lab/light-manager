@@ -72,6 +72,24 @@ class AlarmScheduleTests(IsolatedAsyncioTestCase):
         self.assertEqual(self.record, before)
         self.wake.execute.assert_not_called(); self.wake.save_record.assert_not_called(); self.hass.services.async_call.assert_not_called()
 
+    async def test_day_type_display_name_replaces_technical_name_for_every_phase(self):
+        self.wake.day_definitions.return_value = [{'id':'schultag','name':'Wochentag_Feiertage_RLP','display_name':'Werktag'}]
+        before=deepcopy(self.record)
+        result=await self.read()
+        self.assertEqual(len(result['items']),3)
+        self.assertEqual({row['day_type'] for row in result['items']},{'Werktag'})
+        self.assertEqual({row['name'] for row in result['items']},{'Maximilian'})
+        self.assertEqual(self.record,before)
+        self.wake.save_record.assert_not_called()
+        self.hass.services.async_call.assert_not_called()
+
+    async def test_missing_or_empty_display_names_fall_back_and_updates_are_live(self):
+        for display in [None,'','   ']:
+            self.wake.day_definitions.return_value=[{'id':'schultag','name':'Schultag','display_name':display}]
+            self.assertEqual({row['day_type'] for row in (await self.read())['items']},{'Schultag'})
+        self.wake.day_definitions.return_value=[{'id':'schultag','name':'Technical','display_name':'  Schule & Büro  '}]
+        self.assertEqual({row['day_type'] for row in (await self.read())['items']},{'Schule & Büro'})
+
     async def test_completed_and_past_sunrise_disappears_without_changing_wake(self):
         self.record['runs']['2026-11-13/schultag/sunrise'] = True
         self.assertEqual({r['phase'] for r in (await self.read())['items']}, {'wake'})

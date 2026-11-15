@@ -58,7 +58,8 @@ async def async_alarm_schedule(hass, caller, *, now, zone):
             current = entry.options.get(wake.KEY, {}).get(alarm_id, {})
             if current.get('revision') != revision or current.get('binding', {}).get('card_id') != card_id:
                 raise ValueError('Alarm changed during schedule calculation')
-            names = {item['id']: item['name'] for item in wake.day_definitions(record)}
+            names = {item['id']: (item.get('display_name') or '').strip() or item['name']
+                     for item in wake.day_definitions(record)}
             result = []
             candidates = [(kind, _timestamp(plan['at'])) for kind, plan in upcoming['types'].items()
                           if plan.get('active') and plan.get('at')]

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.4
+
+- Show the configured Wecker day-type display name in Schedule instead of its technical name, for both sunrise and wake light actions.
+- Preserve compatibility with older alarms without display names and keep the integration read-only.
+
 ## 1.3.3
 
 - Use HA UI Kit 1.5.2 skipped rows with light-gray text and the distinct restore-schedule icon.

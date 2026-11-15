@@ -25,7 +25,7 @@ type: custom:light-manager-card
 
 ## GitHub-Release
 
-Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.3.3` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
+Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.3.4` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
 
 [Changelog](CHANGELOG.md) · [MIT-Lizenz](LICENSE)
 
@@ -46,3 +46,5 @@ Im Zeitprogramm überspringt der reine **Skip**-Icon-Button aus dem UI Kit (ohne
 Skip und Verschieben verwenden die gemeinsame Inline-Aktionsgruppe aus HA UI Kit 1.5.2 und bleiben auch bei langen Namen und auf kleinen Mobilgeräten nebeneinander.
 
 Ausgelassene Termine erscheinen hellgrau, ohne zusätzlichen Auslassen-Text. Das neue UI-Kit-Symbol mit Rückkehrpfeil und Uhr plant den Termin wieder ein.
+
+Wecker-Tagestypen in der Zeitübersicht verwenden den im Wecker gepflegten Anzeigenamen statt des technischen Namens. Ältere Einträge ohne Anzeigenamen verwenden weiterhin ihren bisherigen Namen.
