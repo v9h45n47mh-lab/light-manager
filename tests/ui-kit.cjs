@@ -49,6 +49,10 @@ const server=http.createServer((req,res)=>{
  const order=page.locator('[data-action="move-program"][data-program="Evening"]');
  await order.focus();await order.press('ArrowDown');await page.waitForFunction(()=>host.config.programs[0].name==='Second');
  await order.focus();await order.press('ArrowUp');await page.waitForFunction(()=>host.config.programs[0].name==='Evening');
+ const dragFrom=await order.boundingBox(),dragTo=await page.locator('[data-action="move-program"][data-program="Second"]').boundingBox();
+ await page.mouse.move(dragFrom.x+dragFrom.width/2,dragFrom.y+dragFrom.height/2);await page.mouse.down();await page.waitForTimeout(230);await page.mouse.move(dragTo.x+dragTo.width/2,dragTo.y+dragTo.height/2,{steps:8});await page.mouse.up();
+ await page.waitForFunction(()=>host.config.programs[0].id==='Second');
+ await order.press('Home');await page.waitForFunction(()=>host.config.programs[0].id==='Evening');
  async function compareKit(theme,width){
   await page.mouse.move(0,0);
   await page.evaluate(async({theme})=>{
