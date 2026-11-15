@@ -384,6 +384,20 @@ const server=http.createServer((req,res)=>{
  await page.waitForFunction(()=>document.querySelector('light-manager-card').shadowRoot.querySelector('[data-op="skip"][data-date="2026-11-14"]').getAttribute('aria-pressed')==='false');
  assert.equal(await tomorrowSkip.locator('svg[data-icon="skip-once"]').count(),1);
  assert.equal(await tomorrowSkip.locator('xpath=../..').evaluate(e=>e.classList.contains('skipped')),false);
+ // Vacation pauses remain visible without authorizing an execution.
+ await page.evaluate(()=>{host.planned=host.planned.map(row=>({...row,paused:true,reason:'Urlaubspause'}));return document.querySelector('light-manager-card').refresh();});
+ for(const language of ['de','en']){
+  await page.evaluate(language=>{document.querySelector('light-manager-card').language=()=>language;document.querySelector('light-manager-card').render();},language);
+  const reason=language==='de'?'Urlaubspause':'Vacation pause';
+  assert((await page.locator('#lm-schedule').innerText()).includes(reason));
+  assert.equal(await page.locator('#lm-schedule [data-op="reschedule"]:not(:disabled)').count(),0);
+  for(const width of [1100,390,320])for(const dark of [false,true]){
+   await page.setViewportSize({width,height:1000});
+   await page.evaluate(dark=>{for(const [key,value] of Object.entries({'--ha-card-background':dark?'#202020':'#ffffff','--primary-text-color':dark?'#eeeeee':'#212121','--secondary-text-color':dark?'#bbbbbb':'#727272','--divider-color':dark?'#555555':'#e0e0e0'}))document.documentElement.style.setProperty(key,value);},dark);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   if(language==='de')await page.screenshot({path:path.join(root,'test-results/kit-qa-vacation-'+width+'-'+(dark?'dark':'light')+'.png'),fullPage:true});
+  }
+ }
  await nav('programs').click();await page.evaluate(()=>document.querySelector('light-manager-card').refresh());
  assert.equal(await page.evaluate(()=>host.calls.filter(c=>c.type==='light_manager/get').at(-1).include_alarms),false);
  await nav('help').click();

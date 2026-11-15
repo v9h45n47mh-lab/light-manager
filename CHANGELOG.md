@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1
+
+Urlaubsbedingt pausierte Schaltungen bleiben in der Zeitübersicht der nächsten 24 Stunden mit „Urlaubspause“ sichtbar. Die Vorschau startet keine Schaltung und verändert keine Programmdaten. Nicht betroffene Programme laufen weiterhin normal; deaktivierte Programme und Aktionen bleiben ausgeblendet. Einmaliges Verschieben ist für pausierte Einträge deaktiviert.
+
+Die zentrale Integration heißt Family Administration; der Urlaubsmodus befindet sich im eigenen Tab **Urlaubsmodus**. Deutsche und englische Hilfe angepasst. Rechte, zentrale Anbindung und HA UI Kit 1.5.2 bleiben erhalten.
+
+
 ## 1.5.0
 
 Der Urlaubsmodus wird ausschließlich unter **Family Access → Einstellungen → Urlaubsmodus** bedient. Die eigenen Urlaubsmodus-Bereiche und Schalter entfallen aus Light Manager, Shutter Manager und Hausarbeiten. Die Option „Im Urlaub pausieren“ je Programm bleibt erhalten; Programme ohne diese Option laufen weiter. Hausarbeiten pausieren ohne Änderung ihres Wiederholungsrhythmus und laufen beim Ausschalten ab heute weiter.
