@@ -25,7 +25,9 @@ class ScheduleWindowTests(TestCase):
                   program('season','time',[action('season_action',time='07:00')],season_enabled=True,season_from='11-13',season_to='11-13'),
                   program('vacation','time',[action('vacation_action',time='07:00')],pause_in_vacation=True))
         c['vacation']=True
-        self.assertEqual([r['action'] for r in Engine(c).upcoming(at('2026-11-13T21:00:00'))],['yes'])
+        rows=Engine(c).upcoming(at('2026-11-13T21:00:00'))
+        self.assertEqual([r['action'] for r in rows],['yes','vacation_action'])
+        self.assertEqual([(r['paused'],r['reason']) for r in rows],[(False,''),(True,'Urlaubspause')])
 
     def test_tomorrow_skips_do_not_hide_today_or_another_occurrence(self):
         c=fixture(program('p','time',[action(time='13:30',skips=['2026-03-29'])]))
@@ -69,3 +71,19 @@ class ScheduleWindowTests(TestCase):
         before=deepcopy((e.rt,e.planned,e.config,e.rules,e.warnings,e.status))
         e.upcoming(at('2026-11-13T21:00:00'));e.upcoming(at('2026-11-13T21:00:00'))
         self.assertEqual((e.rt,e.planned,e.config,e.rules,e.warnings,e.status),before)
+
+
+class VacationPreviewTests(TestCase):
+    def test_preview_keeps_paused_actions_without_executing_them(self):
+        c=fixture(program('pause','time',[action('paused',time='18:00')],pause_in_vacation=True),
+                  program('normal','time',[action('normal_action',time='19:00')]))
+        c['vacation']=True;e=Engine(c)
+        before=deepcopy((e.config,e.rt))
+        rows=e.upcoming(at('2026-11-15T16:00:00'))
+        self.assertEqual([r['paused'] for r in rows],[True,False])
+        self.assertEqual((e.config,e.rt),before)
+        only=deepcopy(c);only['programs']=only['programs'][:1];e=Engine(only)
+        e.plan(at('2026-11-15T16:59:00'),{})
+        self.assertEqual(e.plan(at('2026-11-15T17:00:00'),{}),[])
+        c['vacation']=False;e.replace(c)
+        self.assertFalse(e.upcoming(at('2026-11-15T17:01:00'))[0]['paused'])

@@ -407,7 +407,7 @@ class Engine:
             day += timedelta(days=1)
         rows = []
         for p in self.config['programs']:
-            if p['kind'] != 'time' or not p['enabled'] or (self.config['vacation'] and p['pause_in_vacation']):
+            if p['kind'] != 'time' or not p['enabled']:
                 continue
             for a in p['actions']:
                 if not a['enabled']:
@@ -423,7 +423,9 @@ class Engine:
                         continue
                     rows.append({'program': p['id'], 'action': a['id'], 'name': p['name'],
                                  'due': due.isoformat(), 'mode': a['mode'],
-                                 'skipped': str(day) in a.get('skips', []), 'date': str(day)})
+                                 'skipped': str(day) in a.get('skips', []), 'date': str(day),
+                                 'paused': bool(self.config['vacation'] and p['pause_in_vacation']),
+                                 'reason': 'Urlaubspause' if self.config['vacation'] and p['pause_in_vacation'] else ''})
         return sorted(rows, key=lambda row: datetime.fromisoformat(row['due']).timestamp())
 
     def target_lamps(self, targets, states=None):
