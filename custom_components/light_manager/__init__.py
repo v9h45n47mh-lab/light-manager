@@ -25,13 +25,14 @@ from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.storage import Store
 from homeassistant.auth.permissions.const import POLICY_READ, POLICY_CONTROL
 from .family_access import allows, require, register
+from . import vacation_client
 from homeassistant.helpers.sun import get_astral_event_date
 
 from .engine import Engine, validate, restrict_scene_config, scene_matches
 from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.4.0'
+VERSION = '1.5.0'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,13 +50,7 @@ async def async_setup(hass, config):
         websocket_api.async_register_command(hass, command)
 
     async def vacation(call):
-        if call.context.user_id:
-            user=await hass.auth.async_get_user(call.context.user_id)
-            require(hass,user,DOMAIN,'manage',getattr(user,'is_admin',False))
-        m = hass.data.get(DOMAIN)
-        if not m: raise ValueError('Light Manager zuerst als Integration hinzufügen.')
-        c = deepcopy(m.engine.config); c['vacation'] = call.data['enabled']
-        await m.save(c, m.revision)
+        await vacation_client.set_via_service(hass, call)
     hass.services.async_register(DOMAIN, 'set_vacation', vacation,
                                  vol.Schema({vol.Required('enabled'): bool}))
     return True
@@ -67,6 +62,7 @@ async def async_setup_entry(hass, entry):
     await m.load()
     hass.data[DOMAIN] = m
     entry.runtime_data = m
+    await vacation_client.register(hass, DOMAIN, m.legacy_vacation, lambda:hass.async_create_task(m.pulse()), entry=entry)
     await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
     m.unsubs.append(async_track_time_interval(hass, m.pulse, timedelta(seconds=5)))
     @callback
@@ -134,6 +130,12 @@ class Manager:
                     self.log('Bereichsumstellung: Eindeutige Ziele übernommen, übrige Zuordnungen als einzelne Lampen erhalten. Leere Altziele bitte prüfen.')
                 await self.persist()
         self.update_watched()
+
+    def legacy_vacation(self):
+        return {'enabled':self.engine.config['vacation'],'started':None,'periods':[]}
+
+    def vacation_snapshot(self):
+        return vacation_client.snapshot(self.hass,self.legacy_vacation(),DOMAIN)
 
     def update_watched(self):
         watched = set()
@@ -299,7 +301,7 @@ class Manager:
                                   if datetime.fromisoformat(row['time']).astimezone(ZoneInfo(self.hass.config.time_zone)).date() == local.date()],
                 'warnings': self.engine.warnings + list(self.errors.values()), 'history': list(reversed(self.history)),
                 'planned': self.engine.upcoming(now, self.solar), 'calculated': calculated, 'sun': sun, 'today': str(local.date()),
-                'timezone': self.hass.config.time_zone}
+                'timezone': self.hass.config.time_zone,'vacation':vacation_client.status(self.hass,self.legacy_vacation(),DOMAIN)}
 
     def drop_removed_targets_from_finished_once(self, config):
         if not isinstance(config, dict) or not isinstance(config.get('lamps'), list):
@@ -341,6 +343,7 @@ class Manager:
             if revision != self.revision:
                 raise ValueError('Die Konfiguration wurde zwischenzeitlich geändert. Bitte neu laden; deine Eingaben bleiben erhalten.')
             checked = validate(self.drop_removed_targets_from_finished_once(config))
+            checked['vacation']=self.vacation_snapshot()['enabled']
             self.engine.validate_reschedules(checked, utcnow(), self.solar)
             self.validate_live(checked)
             previous, previous_revision = deepcopy(self.engine), self.revision
@@ -389,6 +392,7 @@ class Manager:
         await self.hass.services.async_call('light', 'turn_off' if a['mode'] == 'off' else 'turn_on', data, blocking=True)
 
     async def evaluate(self):
+        self.engine.config['vacation']=self.vacation_snapshot()['enabled']
         now = utcnow(); states = self.states()
         commands = self.engine.plan(now, states, self.solar)
         relevant = {signature_key(c) for c in commands}
