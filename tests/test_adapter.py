@@ -22,6 +22,9 @@ def identity(*args,**kwargs):
 def schema(definition):
     def decorator(fn):fn.ws_schema=vol.Schema({vol.Required('id'):int}).extend(definition);return fn
     return decorator
+module('homeassistant.auth')
+module('homeassistant.auth.permissions')
+module('homeassistant.auth.permissions.const',POLICY_READ='read',POLICY_CONTROL='control')
 module('homeassistant.components.frontend',add_extra_js_url=identity)
 module('homeassistant.components.websocket_api',websocket_command=schema,require_admin=identity,async_response=identity,async_register_command=identity)
 module('homeassistant.components.http',StaticPathConfig=lambda *a:None)
@@ -41,6 +44,22 @@ spec=importlib.util.spec_from_file_location('lm_adapter',ROOT/'custom_components
 adapter=importlib.util.module_from_spec(spec);sys.modules[spec.name]=adapter;spec.loader.exec_module(adapter)
 
 class AdapterTests(IsolatedAsyncioTestCase):
+    async def test_central_manager_never_bypasses_native_entity_permission_and_can_be_revoked(self):
+        grants={'view':True,'manage':True}
+        self.hass.data['family_access_manager']=types.SimpleNamespace(application_protocol=1,application_permissions=lambda u,a:dict(grants))
+        native=types.SimpleNamespace(allowed=False)
+        user=types.SimpleNamespace(is_admin=False,permissions=types.SimpleNamespace(check_entity=lambda *a:native.allowed))
+        connection=types.SimpleNamespace(user=user,send_result=Mock(),send_error=Mock())
+        msg={'id':1,'config':fixture(),'revision':0}
+        await adapter.ws_save(self.hass,connection,msg)
+        connection.send_error.assert_called_once();self.m.store.async_save.assert_not_called()
+        native.allowed=True;connection.send_error.reset_mock()
+        await adapter.ws_save(self.hass,connection,msg)
+        connection.send_result.assert_called_once();self.assertFalse(user.is_admin)
+        grants['manage']=False;connection.send_result.reset_mock()
+        await adapter.ws_save(self.hass,connection,{**msg,'revision':1})
+        connection.send_result.assert_not_called();connection.send_error.assert_called_once()
+
     def setUp(self):
         self.s={'light.flur':state('off',supported_color_modes=['color_temp'],supported_features=32)}
         def states():return [types.SimpleNamespace(entity_id=e,state=v['state'],attributes=v['attributes']) for e,v in self.s.items()]

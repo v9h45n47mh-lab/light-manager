@@ -1,6 +1,6 @@
 import {UI_CSS, UI_VERSION, icon as uiIcon, button as uiButton, iconButton, programAddButton, navigation, section as uiSection, row as uiRow, toggle as uiToggle, programGroup, programRow, actionRow, field as uiField, selectField, dialog as uiDialog, notice, versionInfo, bindUI, multiSelect, checkboxGroup, weekdayPicker, rangeControl, whiteTemperatureControl, colourPicker, timeWindow, seasonPicker, actionEditor as uiActionEditor, sensorOverview, historyList, languagePicker, backupControls, helpContent, feedback, emptyState, dayAgenda, statusBadge, programOrderButtons, confirmDialog, downloadJSON} from './family-ui/1.5.2/family-ui.js';
-/* Light Manager 1.3.4 — no external assets, dependencies or network services. */
-const LM_VERSION = '1.3.4';
+/* Light Manager 1.4.0 — no external assets, dependencies or network services. */
+const LM_VERSION = '1.4.0';
 const lmClone = x => JSON.parse(JSON.stringify(x));
 const lmEsc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lmId = () => globalThis.crypto?.randomUUID?.() || 'lm_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -120,7 +120,7 @@ class LightManagerCard extends HTMLElement {
   async refresh(){if(!this._hass||this.loading||this.busy||this.confirming)return;this.loading=true;try{
     this.data=await this._hass.callWS({type:'light_manager/get',include_alarms:this.tab==='time'});if(!this.editor)this.render();else{this.syncSceneOptions();const overview=this.shadowRoot.querySelector('.overview');if(overview){overview.innerHTML=this.overviewContent();this.translateDom(overview);}}
   }catch(e){this.error=e.message||String(e);if(!this.editor)this.render();}finally{this.loading=false;}}
-  async save(config,revision=this.data.revision){if(this.busy)return false;if(this.data?.version!==LM_VERSION||this.data?.schema!==4){this.error='Versionskonflikt: Bitte Home Assistant neu starten und Browser neu laden.';return false;}this.busy=true;this.error='';try{
+  async save(config,revision=this.data.revision){if(this.data?.permissions?.manage===false){this.error='Die Verwaltung ist für deine Rolle nicht freigegeben.';this.render();return false;}if(this.busy)return false;if(this.data?.version!==LM_VERSION||this.data?.schema!==4){this.error='Versionskonflikt: Bitte Home Assistant neu starten und Browser neu laden.';return false;}this.busy=true;this.error='';try{
     const r=await this._hass.callWS({type:'light_manager/save',revision,config});
     if(r.version!==LM_VERSION||r.schema!==4)throw Error('Versionskonflikt: Bitte Home Assistant neu starten und den Browser neu laden.');
     this.data={...r,alarm_schedule:this.data?.alarm_schedule};return true;
@@ -211,7 +211,7 @@ class LightManagerCard extends HTMLElement {
       <main>${this.error&&!ed?`<div class="fui-feedback error" role="alert">${lmEsc(this.message(this.error))}</div>`:''}
       ${d&&d.version!==LM_VERSION?'<div class="fui-feedback error">Versionskonflikt. Home Assistant neu starten und Browser neu laden.</div>':''}
       ${!d?this.empty('Integration unter Geräte & Dienste hinzufügen.',''):
-        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?helpContent({content:versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})+this.guide()}):this.programPage())}</main>`;
+        (this.tab==='settings'?this.settings():this.tab==='time'?this.timePage():this.tab==='sensors'?this.sensorPage():this.tab==='status'?this.statusPage():this.tab==='guide'?helpContent({content:versionInfo({frontend:LM_VERSION,backend:d.version,ui:UI_VERSION,label:this.t('Oberfläche'),backendLabel:this.t('Integration')})+this.guide()+(this.language()==='en'?'<h3>Permissions</h3><p>Application permissions are managed per role in Family Access → Light Manager. Read-only roles can view programs; management requires the corresponding grant. Native Home Assistant device permissions still apply.</p>':'<h3>Berechtigungen</h3><p>Anwendungsrechte werden je Rolle unter Family Access → Light Manager verwaltet. Leserechte erlauben die Ansicht; Änderungen benötigen die Verwaltungsfreigabe. Die HA-Geräterechte gelten zusätzlich.</p>')}):this.programPage())}</main>`;
     const previousDialog=this.shadowRoot.querySelector('dialog');
     previousDialog?.close();
     this.shadowRoot.querySelector('.dialog-host').innerHTML=ed?this.dialog():'';
@@ -225,6 +225,11 @@ class LightManagerCard extends HTMLElement {
       const f=this.returnFocus;
       const button=[...this.shadowRoot.querySelectorAll('button')].find(b=>f.op?(b.dataset.op===f.op&&b.dataset.id===f.id&&b.dataset.section===f.section):(b.dataset.action===f.action&&b.dataset.program===f.program));
       button?.focus({preventScroll:true});this.returnFocus=null;
+    }
+    if(d?.permissions?.manage===false){
+      for(const control of this.shadowRoot.querySelectorAll('button[data-op],button[role="switch"],button[data-action="lm-area-order"],button[data-action="lm-move"],button[data-action="lm-skip"],input,select')){
+        if(!['tab','refresh','help','status'].includes(control.dataset.op))control.disabled=true;
+      }
     }
     this.shadowRoot.querySelector('nav').scrollLeft=navScroll;
     if(ed){const form=this.shadowRoot.querySelector('.form');if(form)form.scrollTop=scroll;

@@ -23,13 +23,15 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.storage import Store
+from homeassistant.auth.permissions.const import POLICY_READ, POLICY_CONTROL
+from .family_access import allows, require, register
 from homeassistant.helpers.sun import get_astral_event_date
 
 from .engine import Engine, validate, restrict_scene_config, scene_matches
 from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.3.4'
+VERSION = '1.4.0'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,16 +49,20 @@ async def async_setup(hass, config):
         websocket_api.async_register_command(hass, command)
 
     async def vacation(call):
+        if call.context.user_id:
+            user=await hass.auth.async_get_user(call.context.user_id)
+            require(hass,user,DOMAIN,'manage',getattr(user,'is_admin',False))
         m = hass.data.get(DOMAIN)
         if not m: raise ValueError('Light Manager zuerst als Integration hinzufügen.')
         c = deepcopy(m.engine.config); c['vacation'] = call.data['enabled']
         await m.save(c, m.revision)
-    async_register_admin_service(hass, DOMAIN, 'set_vacation', vacation,
+    hass.services.async_register(DOMAIN, 'set_vacation', vacation,
                                  vol.Schema({vol.Required('enabled'): bool}))
     return True
 
 
 async def async_setup_entry(hass, entry):
+    await register(hass, DOMAIN, ('view','manage'), lambda user: {'view':bool(user.is_admin),'manage':bool(user.is_admin)}, entry=entry)
     m = Manager(hass)
     await m.load()
     hass.data[DOMAIN] = m
@@ -425,29 +431,38 @@ def signature_key(c):
 
 @websocket_api.websocket_command({vol.Required('type'): DOMAIN + '/get',
                                  vol.Optional('include_alarms', default=False): bool})
-@websocket_api.require_admin
 @websocket_api.async_response
 async def ws_get(hass, connection, msg):
     try:
         m = hass.data.get(DOMAIN)
         if not m: raise ValueError('Bitte zuerst die Integration Light Manager hinzufügen.')
+        require(hass, connection.user, DOMAIN, 'view', connection.user.is_admin)
         snapshot = m.snapshot()
+        for item in [*snapshot['config'].get('lamps',[]),*snapshot['config'].get('sensors',[])]:
+            if not connection.user.is_admin and not connection.user.permissions.check_entity(item.get('entity',''),POLICY_READ):raise PermissionError('Keine HA-Leseberechtigung für die ausgewählten Geräte.')
+        snapshot['permissions'] = {'view':True,'manage':allows(hass,connection.user,DOMAIN,'manage',connection.user.is_admin)}
         if msg.get('include_alarms', False):
             snapshot['alarm_schedule'] = await async_alarm_schedule(
                 hass, connection.user, now=utcnow(), zone=hass.config.time_zone)
         connection.send_result(msg['id'], snapshot)
-    except ValueError as err: connection.send_error(msg['id'], 'light_manager_error', str(err))
+    except (ValueError, PermissionError) as err: connection.send_error(msg['id'], 'light_manager_error', str(err))
 
 
 @websocket_api.websocket_command({vol.Required('type'): DOMAIN + '/save',
                                  vol.Required('revision'): int, vol.Required('config'): dict})
-@websocket_api.require_admin
 @websocket_api.async_response
 async def ws_save(hass, connection, msg):
     try:
         m = hass.data.get(DOMAIN)
         if not m: raise ValueError('Bitte zuerst die Integration Light Manager hinzufügen.')
+        require(hass, connection.user, DOMAIN, 'manage', connection.user.is_admin)
+        for lamp in msg['config'].get('lamps',[]):
+            if not connection.user.permissions.check_entity(lamp.get('entity',''), POLICY_CONTROL):
+                raise PermissionError('Keine HA-Bedienberechtigung für diese Lampe.')
+        for sensor in msg['config'].get('sensors',[]):
+            if not connection.user.permissions.check_entity(sensor.get('entity',''), POLICY_READ):
+                raise PermissionError('Keine HA-Leseberechtigung für diesen Sensor.')
         await m.save(msg['config'], msg['revision'])
-        connection.send_result(msg['id'], m.snapshot())
-    except (ValueError, TypeError, KeyError) as err:
+        connection.send_result(msg['id'], {**m.snapshot(),'permissions':{'view':True,'manage':True}})
+    except (ValueError, TypeError, KeyError, PermissionError) as err:
         connection.send_error(msg['id'], 'light_manager_error', str(err))
