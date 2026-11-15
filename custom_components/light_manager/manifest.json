@@ -1,7 +1,7 @@
 {
   "domain": "light_manager",
   "name": "Light Manager",
-  "version": "1.3.4",
+  "version": "1.4.0",
   "config_flow": true,
   "dependencies": [
     "frontend",
@@ -15,5 +15,8 @@
     "@v9h45n47mh-lab"
   ],
   "documentation": "https://github.com/v9h45n47mh-lab/light-manager",
-  "issue_tracker": "https://github.com/v9h45n47mh-lab/light-manager/issues"
+  "issue_tracker": "https://github.com/v9h45n47mh-lab/light-manager/issues",
+  "after_dependencies": [
+    "family_access_manager"
+  ]
 }

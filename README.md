@@ -25,7 +25,7 @@ type: custom:light-manager-card
 
 ## GitHub-Release
 
-Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.3.4` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
+Dieses Paket ist für `v9h45n47mh-lab/light-manager` vorbereitet. Bei einem anderen Repository die Felder `documentation`, `issue_tracker` und `codeowners` in `custom_components/light_manager/manifest.json` anpassen. Die entpackten Dateien ins Repository-Stammverzeichnis übernehmen und aus diesem Stand das Release mit Tag `v1.4.0` erstellen. HACS verwendet die Integrationsdateien aus dem getaggten Repository.
 
 [Changelog](CHANGELOG.md) · [MIT-Lizenz](LICENSE)
 
@@ -48,3 +48,14 @@ Skip und Verschieben verwenden die gemeinsame Inline-Aktionsgruppe aus HA UI Kit
 Ausgelassene Termine erscheinen hellgrau, ohne zusätzlichen Auslassen-Text. Das neue UI-Kit-Symbol mit Rückkehrpfeil und Uhr plant den Termin wieder ein.
 
 Wecker-Tagestypen in der Zeitübersicht verwenden den im Wecker gepflegten Anzeigenamen statt des technischen Namens. Ältere Einträge ohne Anzeigenamen verwenden weiterhin ihren bisherigen Namen.
+
+
+## Zentrale Rollenrechte
+
+Rollenrechte: Programme ansehen sowie Programme und Einstellungen verwalten. Nicht freigegebene Aktionen und native HA-Geräte ohne passende Bedienberechtigung werden im Backend abgelehnt. Deutsche und englische Hilfe angepasst.
+
+Berechtigungen werden jetzt in **Family Access → Anwendung → Rolle** verwaltet. Benutzer können mehrere Rollen erhalten; ihre Freigaben ergänzen sich. Vorhandene Anwendungsrechte werden einmalig in Rollen mit dem Zusatz „übernommen“ importiert und den bisherigen Benutzern zugeordnet. Dashboardfreigaben und die Aktivierung der Dashboardnavigation werden dadurch nicht verändert.
+
+Zum Entziehen eines Rechts alle zugewiesenen Rollen einschließlich übernommener Rollen prüfen. Neue Benutzer erhalten nach der Übernahme keine automatischen Anwendungsrechte. Echte HA-Administratoren behalten Vollzugriff zur Wiederherstellung. Geräte-, Eigentümer- und externe Kontoberechtigungen gelten zusätzlich; eine Rolle erzeugt keine HA-Administratorrechte.
+
+**Aktualisierung:** zuerst Family Access Manager 1.1.0 oder neuer, danach die beteiligten Anwendungen aktualisieren und Home Assistant neu starten. Solange Family Access nicht eingerichtet ist, bleibt die bisherige Rechtevergabe erhalten. Ist Family Access eingerichtet, aber nicht verfügbar oder zu alt, werden Anwendungsaktionen für normale Benutzer abgelehnt. Lokale Benutzer-/Personen-, Geräte- und Musikkontozuordnungen bleiben für Identität und Eigentum erhalten; Rechte werden zentral vergeben.
