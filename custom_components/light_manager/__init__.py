@@ -32,7 +32,7 @@ from .engine import Engine, validate, restrict_scene_config, scene_matches
 from .alarm_schedule import async_alarm_schedule
 
 DOMAIN = 'light_manager'
-VERSION = '1.6.0'
+VERSION = '1.6.1'
 SIGNAL = DOMAIN + '_update'
 _LOGGER = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class Manager:
         self.store = Store(hass, 1, DOMAIN)
         self.revision = 0; self.lock = asyncio.Lock(); self.unsubs = []
         self.daily_history = []
-        self.history = []; self.retry = {}; self.errors = {}
+        self.history = []; self.errors = {}
         self.state_unsub = None; self.state_callback = None; self.watched = set()
         self.queued = False; self.stopped = False; self._saved = None
 
@@ -397,14 +397,19 @@ class Manager:
         commands = self.engine.plan(now, states, self.solar)
         relevant = {signature_key(c) for c in commands}
         self.errors = {k: v for k, v in self.errors.items() if k in relevant}
-        self.retry = {k: v for k, v in self.retry.items() if k in relevant}
         await self.persist()
         for c in commands:
             current = self.states()
             if any(current.get(e) != states.get(e) for e in self.watched):
                 break  # A queued sensor event must arbitrate again before another device command.
             key = signature_key(c)
-            if self.retry.get(key, 0) > now.timestamp(): continue
+            failed = self.engine.rt.setdefault('failed_commands', {})
+            pending = [e for e in c['entities'] if failed.get(e) != c['key']]
+            if not pending: continue
+            if len(pending) != len(c['entities']):
+                c = {**c, 'entities': pending}
+                c.pop('service_entity', None)
+                key = signature_key(c)
             self.engine.claim(c, states)
             await self.persist()
             try:
@@ -412,9 +417,11 @@ class Manager:
             except Exception as err:
                 message = f'{", ".join(c["entities"])}: {err}'
                 self.log(message, error=True, command=c)
-                self.errors[key] = message; self.retry[key] = now.timestamp() + 30
+                self.errors[key] = message
+                for entity in c['entities']: failed[entity] = c['key']
             else:
-                self.engine.success(c); self.retry.pop(key, None); self.errors.pop(key, None)
+                self.engine.success(c); self.errors.pop(key, None)
+                for entity in c['entities']: failed.pop(entity, None)
                 self.log(f'{", ".join(c["entities"])} → {c["action"]["mode"]}', command=c)
         await self.persist()
         async_dispatcher_send(self.hass, SIGNAL)

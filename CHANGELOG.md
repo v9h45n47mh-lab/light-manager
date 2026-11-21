@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1
+
+- Do not retry or catch up a failed switching command when a light reconnects. Persist per-light failed-command markers across restarts without marking a failed call successful.
+- Keep the next scheduled occurrence and other lights independent; avoid repeated history entries for disconnected lights.
+
 ## 1.6.0
 
 Manuell sortierbare Einträge werden am gemeinsamen Sortiergriff gedrückt gehalten und an die gewünschte Position gezogen. Die bisherigen Auf-/Ab-Pfeile entfallen. Maus, Touch und Tastatur am Griff werden unterstützt; Escape bricht den Vorgang ab. HA UI Kit 1.7.0 liefert Griff, Rückmeldung und Interaktion gemeinsam. Bestehende Rechte und gespeicherte Daten bleiben erhalten.

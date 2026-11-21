@@ -99,13 +99,34 @@ class AdapterTests(IsolatedAsyncioTestCase):
         self.hass.services.async_call.assert_not_called();self.assertIn('keine Helligkeitssteuerung',str(self.m.errors))
         self.assertTrue(self.m.engine.rt['controlled'])
 
-    async def test_service_failure_retries_after_thirty_seconds_and_retains_goal(self):
+    async def test_service_failure_is_not_retried_and_next_occurrence_still_runs(self):
         self.hass.services.async_call.side_effect=RuntimeError('Bridge nicht erreichbar')
         await self.m.save(fixture(program('p','time',[action(time='18:00')])),0)
         self.assertTrue(self.m.errors);self.assertFalse(self.m.engine.rt['delivered'])
         await self.m.pulse();self.assertEqual(self.hass.services.async_call.await_count,1)
         self.now+=adapter.timedelta(seconds=30);self.hass.services.async_call.side_effect=None
+        await self.m.pulse();self.assertEqual(self.hass.services.async_call.await_count,1);self.assertTrue(self.m.errors)
+        self.now+=adapter.timedelta(days=1)
         await self.m.pulse();self.assertEqual(self.hass.services.async_call.await_count,2);self.assertFalse(self.m.errors)
+
+    async def test_unplugged_light_is_not_caught_up_after_reconnect_or_restart(self):
+        self.s['light.flur']['state']='unavailable'
+        await self.m.save(fixture(program('p','time',[action(time='18:00')])),0)
+        self.assertEqual(len(self.m.daily_history),1)
+        self.hass.services.async_call.assert_not_called()
+        stored=deepcopy(self.m.store.async_save.call_args.args[0])
+        self.s['light.flur']['state']='off'
+        self.now+=adapter.timedelta(minutes=5)
+        await self.m.pulse()
+        self.assertEqual(len(self.m.daily_history),1)
+        restarted=adapter.Manager(self.hass)
+        restarted.engine=adapter.Engine(stored['config'],stored['runtime'],self.hass.config.time_zone)
+        await restarted.pulse()
+        self.hass.services.async_call.assert_not_called()
+        self.assertFalse(restarted.engine.rt['delivered'])
+        self.now+=adapter.timedelta(days=1)
+        await restarted.pulse()
+        self.hass.services.async_call.assert_awaited_once()
 
     async def test_stale_revision_cannot_overwrite_saved_config(self):
         c=fixture();await self.m.save(c,0)
@@ -262,7 +283,7 @@ class AdapterTests(IsolatedAsyncioTestCase):
         self.assertEqual(self.hass.services.async_call.call_args.args,('scene','turn_on',{'entity_id':'scene.flur_abend','transition':0}))
         await self.m.pulse();self.assertEqual(self.hass.services.async_call.await_count,1)
 
-    async def test_scene_service_failure_is_visible_and_retried(self):
+    async def test_scene_service_failure_is_visible_without_retry(self):
         self.s['scene.flur_abend']=state('unknown')
         c=fixture(program('p','time',[action(mode='scene',scene='scene.flur_abend',time='18:00')]))
         c['lamps'][0]['scenes']=['scene.flur_abend']
@@ -270,8 +291,8 @@ class AdapterTests(IsolatedAsyncioTestCase):
         await self.m.save(c,0);self.assertTrue(self.m.errors)
         await self.m.pulse();self.assertEqual(self.hass.services.async_call.await_count,1)
         self.now+=adapter.timedelta(seconds=30);self.hass.services.async_call.side_effect=None
-        await self.m.pulse();self.assertFalse(self.m.errors)
-        self.assertEqual(self.hass.services.async_call.await_count,2)
+        await self.m.pulse();self.assertTrue(self.m.errors)
+        self.assertEqual(self.hass.services.async_call.await_count,1)
 
     async def test_schema_three_backup_keeps_runtime_before_upgrade(self):
         c=fixture();c['schema']=3

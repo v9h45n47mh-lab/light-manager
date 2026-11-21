@@ -32,3 +32,5 @@ Vor jedem Release den Hilfe-Tab (?) auf Deutsch und Englisch mit dem aktuellen F
 1.3.3: Gemeinsamer Skipped-Zustand aus HA UI Kit 1.5.2, hellgraue Termintexte ohne Statuszeile und eigenes Restore-Symbol. Iconwechsel, Wiederherstellen und durchgehende Buttonzeile in Hell/Dunkel bei Desktop/Mobil geprüft.
 
 1.3.4: Anzeigename des Wecker-Tagestyps für Sonnenaufgang und Weckzeit, Rückfall bei fehlendem/leeren Anzeigenamen und Live-Änderungen. Anzeige bleibt rein lesend; Namen des Weckers, Zeiten, Geräte und Berechtigungen unverändert.
+
+1.6.1: 152 Python-Tests bestanden. Fehlgeschlagene Befehle werden pro Lampe und Befehl dauerhaft gegen Wiederholung gesperrt. Wiederverbinden, Neustart, nächste reguläre Schaltung und Szenen geprüft; keine falsche Erfolgsquittierung.
